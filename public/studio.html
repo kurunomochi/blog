@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>作品管理 · kurumochi</title>
+    <link rel="stylesheet" href="/portfolio.css" />
+    <script src="/common.js?v=20261020-refactor"></script>
+    <script src="/studio.js?v=20261020-refactor" defer></script>
+  </head>
+  <body>
+    <header class="header wrap">
+      <a class="wordmark" href="/portfolio.html"
+        >kurumochi<span class="brand-dot"></span
+      ></a>
+      <nav>
+        <a href="/portfolio.html">查看作品集 ↗</a
+        ><a href="/admin.html">文章管理 ↗</a>
+      </nav>
+    </header>
+    <main class="studio wrap">
+      <p class="eyebrow">YOUR CREATIVE SPACE</p>
+      <h1>作品工作室</h1>
+      <section id="login-panel" class="panel login-panel">
+        <h2>管理员登录</h2>
+        <form id="login-form">
+          <label
+            >账号<input
+              name="username"
+              autocomplete="username"
+              required /></label
+          ><label
+            >密码<input
+              name="password"
+              type="password"
+              autocomplete="current-password"
+              required /></label
+          ><button class="btn" type="submit">登录工作室 ↗</button>
+          <p id="login-message" class="message" role="alert"></p>
+        </form>
+      </section>
+      <section id="dashboard" hidden>
+        <div class="studio-toolbar">
+          <p class="studio-note">上传你的渲染图，让新的作品在这里相遇。</p>
+          <div class="studio-actions">
+            <button id="new-work" class="btn" type="button">＋ 新建作品</button
+            ><button id="logout" class="btn secondary" type="button">
+              退出登录
+            </button>
+          </div>
+        </div>
+        <p id="dashboard-message" class="message" role="status"></p>
+        <form id="editor" class="panel" hidden>
+          <div class="studio-toolbar">
+            <h2 id="editor-title">新建作品</h2>
+            <button id="cancel" class="btn secondary" type="button">
+              取消
+            </button>
+          </div>
+          <p class="studio-note">
+            保存后会立即显示在公开作品集。第一张图片默认为封面，也可以手动选择。
+          </p>
+          <div class="form-grid">
+            <label
+              >作品名称<input name="title" required maxlength="100" /></label
+            ><label
+              >分类<input
+                name="category"
+                list="categories"
+                placeholder="环境场景 / 建筑空间 / 角色…"
+                required
+                maxlength="40" /><datalist id="categories">
+                <option value="环境场景"></option>
+                <option value="建筑空间"></option>
+                <option value="角色创作"></option>
+                <option value="材质练习"></option></datalist></label
+            ><label>日期<input name="date" type="date" required /></label
+            ><label
+              >创作工具<input name="software" value="Blender" maxlength="100"
+            /></label>
+          </div>
+          <label
+            >作品介绍<textarea
+              name="description"
+              rows="5"
+              maxlength="15000"
+              placeholder="灵感、场景、制作过程，或想留下的一点记录。"
+            ></textarea>
+          </label>
+          <div class="upload-area">
+            <label
+              >上传作品图片<input
+                id="files"
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                multiple
+            /></label>
+            <p>
+              PNG / JPG / WebP · 单张最大 20 MB · 最多 30
+              张。上传后点击「保存作品」发布。
+            </p>
+            <div id="image-list" class="image-list"></div>
+            <label
+              >也可以使用已有图片地址<input
+                id="image-url"
+                type="url"
+                placeholder="https://…" /></label
+            ><button id="add-url" class="btn secondary" type="button">
+              添加图片地址
+            </button>
+          </div>
+          <label class="check"
+            ><input
+              name="featured"
+              type="checkbox"
+            />设为精选作品（首页优先展示）</label
+          >
+          <p id="editor-message" class="message" role="alert"></p>
+          <button id="save" class="btn" type="submit">保存作品 ↗</button>
+        </form>
+        <div id="work-list"></div>
+      </section>
+    </main>
+  </body>
+</html>

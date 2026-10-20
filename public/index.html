@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="一个记录无意义日常、糟糕学习和个人废料的博客。"
+    />
+    <title>kurumochi / BLOG · 个人垃圾回收站</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&family=Noto+Serif+SC:wght@500;600;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css?v=20260916-avatar" />
+    <script src="https://unpkg.com/lucide@latest" defer></script>
+    <link rel="stylesheet" href="/season-theme.css?v=20261020-refactor" />
+    <script src="/season-theme.js?v=20261019-seasons" defer></script>
+  </head>
+  <body class="blog-theme">
+    <div class="season-background" aria-hidden="true">
+      <video
+        autoplay
+        muted
+        loop
+        playsinline
+        preload="auto"
+        tabindex="-1"
+        disablepictureinpicture
+        disableremoteplayback
+      >
+        <source src="/media/blog-background.mp4" type="video/mp4" />
+      </video>
+    </div>
+    <button
+      id="background-control"
+      class="background-control"
+      type="button"
+      hidden
+    >
+      暂停背景
+    </button>
+    <div class="site-shell">
+      <header class="topbar">
+        <a class="brand" href="#top" aria-label="返回首页">
+          <span class="brand-copy"><strong>kurumochi</strong></span>
+        </a>
+
+        <nav class="desktop-nav" aria-label="主导航">
+          <a class="nav-link is-active" href="#top">首页</a>
+          <a class="nav-link" href="#articles">文章</a
+          ><a class="nav-link" href="/portfolio.html">作品集</a>
+        </nav>
+
+        <div class="topbar-actions">
+          <a class="contact-button" href="mailto:jiezi124168@gmail.com"
+            >我的邮箱 <i data-lucide="arrow-up-right"></i
+          ></a>
+          <button
+            class="icon-button menu-button"
+            id="menu-toggle"
+            type="button"
+            aria-label="打开菜单"
+            aria-expanded="false"
+            title="打开菜单"
+          >
+            <i data-lucide="menu"></i>
+          </button>
+        </div>
+      </header>
+
+      <div class="mobile-menu" id="mobile-menu" aria-hidden="true">
+        <a href="#top">首页</a>
+        <a href="#articles">文章</a><a href="/portfolio.html">作品集</a>
+      </div>
+
+      <main id="top">
+        <section class="intro-section page-width">
+          <div class="intro-copy">
+            <p class="eyebrow">
+              <span class="eyebrow-dot"></span> PERSONAL WASTE LOG · STUDENT ·
+              CHENGDU
+            </p>
+            <p class="intro-text">
+              这里是我的个人博客，记录糟糕的学习日常和一些没有用的想法。会浪费你的时间，大概率毫无意义。
+            </p>
+            <div class="intro-meta">
+              <span class="status-chip">STATUS: STILL PRODUCING</span>
+              <span class="location"
+                ><i data-lucide="map-pin"></i> chengdu, CN</span
+              >
+            </div>
+          </div>
+          <div class="intro-profile">
+            <div class="avatar-slot">
+              <img
+                class="avatar-image"
+                id="avatar-image"
+                src="assets/avater.png"
+                alt="个人头像"
+                width="190"
+                height="190"
+              />
+              <span
+                class="avatar-placeholder"
+                id="avatar-placeholder"
+                aria-hidden="true"
+                ><i data-lucide="user-round"></i
+              ></span>
+            </div>
+            <a
+              class="avatar-github"
+              href="https://github.com/kurunomochi"
+              target="_blank"
+              rel="noreferrer"
+              ><i data-lucide="github"></i> GITHUB</a
+            >
+          </div>
+        </section>
+
+        <section class="featured-section page-width" aria-label="置顶文章">
+          <div class="section-kicker">
+            <span>01</span><span>置顶</span><span class="kicker-line"></span>
+          </div>
+          <article class="featured-post" id="featured-post"></article>
+        </section>
+
+        <section
+          class="articles-section page-width"
+          id="articles"
+          aria-labelledby="articles-title"
+        >
+          <div class="section-heading-row">
+            <div>
+              <div class="section-kicker">
+                <span>02</span><span>文章</span
+                ><span class="kicker-line"></span>
+              </div>
+              <h2 id="articles-title">详细文章内容</h2>
+            </div>
+            <div class="article-tools">
+              <nav
+                class="pagination"
+                id="pagination"
+                aria-label="文章分页"
+              ></nav>
+            </div>
+          </div>
+
+          <div class="filter-row" id="filter-row" aria-label="文章分类"></div>
+          <div class="post-grid" id="post-grid"></div>
+        </section>
+      </main>
+
+      <footer class="footer page-width">
+        <span>© <span id="current-year"></span> kurumochi / BLOG</span>
+        <span>NO VALUE / STILL ARCHIVED.</span>
+        <a href="#top" class="back-top"
+          >回到顶部 <i data-lucide="arrow-up"></i
+        ></a>
+      </footer>
+    </div>
+    <script src="/common.js?v=20261020-refactor"></script>
+    <script src="/script.js?v=20261020-refactor"></script>
+  </body>
+</html>

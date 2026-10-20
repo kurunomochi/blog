@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="kurumochi 的文章页面。" />
+    <title>文章 · kurumochi / BLOG</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&family=Noto+Serif+SC:wght@500;600;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css?v=20260916-avatar" />
+    <script src="https://unpkg.com/lucide@latest" defer></script>
+    <link rel="stylesheet" href="/season-theme.css?v=20261020-refactor" />
+    <script src="/season-theme.js?v=20261019-seasons" defer></script>
+  </head>
+  <body class="article-page-body blog-theme">
+    <div class="season-background" aria-hidden="true">
+      <video
+        autoplay
+        muted
+        loop
+        playsinline
+        preload="auto"
+        tabindex="-1"
+        disablepictureinpicture
+        disableremoteplayback
+      >
+        <source src="/media/blog-background.mp4" type="video/mp4" />
+      </video>
+    </div>
+    <button
+      id="background-control"
+      class="background-control"
+      type="button"
+      hidden
+    >
+      暂停背景
+    </button>
+    <div class="site-shell">
+      <header class="topbar">
+        <a class="brand" href="index.html#top" aria-label="返回首页">
+          <span class="brand-copy"><strong>kurumochi</strong></span>
+        </a>
+        <nav class="desktop-nav" aria-label="文章导航">
+          <a class="nav-link" href="index.html#top">首页</a>
+          <a class="nav-link is-active" href="index.html#articles">文章</a>
+        </nav>
+        <div class="topbar-actions">
+          <a class="contact-button" href="mailto:xx2505675655@163.com"
+            >投递垃圾 <i data-lucide="arrow-up-right"></i
+          ></a>
+        </div>
+      </header>
+
+      <main class="article-page-main page-width">
+        <a class="article-back-link" href="index.html#articles"
+          ><i data-lucide="arrow-left"></i> 返回文章列表</a
+        >
+        <article class="standalone-article">
+          <header class="standalone-article-header">
+            <div class="article-detail-meta" id="article-meta"></div>
+            <h1 id="article-title">文章</h1>
+            <p class="standalone-excerpt" id="article-excerpt"></p>
+          </header>
+          <div class="standalone-body" id="article-body"></div>
+          <footer class="standalone-footer">
+            <a href="index.html#articles"
+              ><i data-lucide="arrow-left"></i> 回到回收记录</a
+            >
+            <span>END OF FILE</span>
+          </footer>
+        </article>
+      </main>
+
+      <footer class="footer page-width">
+        <span>© <span id="current-year"></span> kurumochi / BLOG</span>
+        <span>NO VALUE / STILL ARCHIVED.</span>
+        <a href="#top" class="back-top"
+          >回到顶部 <i data-lucide="arrow-up"></i
+        ></a>
+      </footer>
+    </div>
+    <script src="/common.js?v=20261020-refactor"></script>
+    <script src="/article.js?v=20261020-refactor"></script>
+  </body>
+</html>
