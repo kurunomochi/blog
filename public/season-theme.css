@@ -375,3 +375,77 @@ button:focus-visible {
 .gallery-theme .muted {
   color: #2c4133;
 }
+
+/* A separate introduction beside the profile photo. */
+.blog-theme .intro-section {
+  align-items: center;
+}
+.blog-theme .intro-copy {
+  min-width: 0;
+}
+.blog-theme .self-introduction {
+  margin: 24px 0;
+  padding: 20px 24px;
+  background: rgba(250, 252, 248, 0.76);
+  border: 1px solid rgba(61, 88, 65, 0.18);
+  border-left: 3px solid var(--accent);
+  border-radius: 10px;
+}
+.blog-theme .self-introduction-label {
+  margin: 0 0 8px;
+  color: var(--ink-soft);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+.blog-theme .self-introduction h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(20px, 2.4vw, 28px);
+  font-weight: 600;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 800px) {
+  .blog-theme .self-introduction {
+    padding: 18px 20px;
+  }
+}
+
+.blog-theme .intro-section {
+  display: block;
+}
+.blog-theme .profile-introduction {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 190px;
+  align-items: center;
+  gap: 32px;
+  margin-top: 28px;
+}
+.blog-theme .profile-introduction .self-introduction,
+.blog-theme .profile-introduction .intro-profile {
+  margin: 0;
+}
+@media (max-width: 800px) {
+  .blog-theme .profile-introduction {
+    grid-template-columns: minmax(0, 1fr) 110px;
+    gap: 20px;
+  }
+  .blog-theme .profile-introduction .avatar-slot {
+    width: 110px;
+    height: 110px;
+  }
+}
+@media (max-width: 480px) {
+  .blog-theme .profile-introduction {
+    grid-template-columns: minmax(0, 1fr) 88px;
+    gap: 16px;
+  }
+  .blog-theme .profile-introduction .avatar-slot {
+    width: 88px;
+    height: 88px;
+  }
+  .blog-theme .profile-introduction .self-introduction {
+    padding: 16px;
+  }
+}
