@@ -13,6 +13,27 @@
     <script src="/portfolio.js?v=20261020-refactor" defer></script>
     <link rel="stylesheet" href="/season-theme.css?v=20261020-refactor" />
     <script src="/season-theme.js?v=20261019-seasons" defer></script>
+    <link rel="icon" href="/favicon.svg" />
+    <style>
+      .header nav {
+        flex-wrap: wrap;
+        gap: 14px;
+      }
+      @media (max-width: 640px) {
+        .header {
+          flex-wrap: wrap;
+          gap: 16px;
+        }
+        .header nav {
+          order: 3;
+          width: 100%;
+          justify-content: center;
+        }
+        .header nav span {
+          display: none;
+        }
+      }
+    </style>
   </head>
   <body class="gallery-theme">
     <div class="season-background" aria-hidden="true">
@@ -44,8 +65,9 @@
       ></a>
       <nav aria-label="主导航">
         <a class="active" href="/portfolio.html">作品 <span>Works</span></a
-        ><a href="/index.html">博客 <span>Journal</span></a
+        ><a href="/blog/">文章 <span>Journal</span></a
         ><a href="#about">关于 <span>About</span></a>
+        <a href="/archive.html">归档</a><a href="/about.html">关于我</a>
       </nav>
       <a class="contact-link" href="mailto:jiezi124168@gmail.com"
         >联系我 &nbsp; ↗</a

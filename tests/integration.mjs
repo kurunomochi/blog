@@ -87,6 +87,11 @@ try {
   for (const page of [
     "/",
     "/article.html",
+    "/blog/",
+    "/archive.html",
+    "/about.html",
+    "/journal.js",
+    "/reader.js",
     "/portfolio.html",
     "/work.html",
     "/admin.html",
