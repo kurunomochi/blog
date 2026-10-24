@@ -5,6 +5,16 @@ import vm from "node:vm";
 
 const common = await readFile("public/common.js", "utf8");
 const source = await readFile("public/journal.js", "utf8");
+test("video blocks accept safe MP4 URLs, preserve unsafe text and code examples", () => {
+  const j = setup();
+  assert.equal(j.blocks(["[video](/uploads/a.mp4)"])[0].type, "video");
+  assert.equal(j.blocks(["[video](javascript:a.mp4)"])[0].type, "p");
+  assert.equal(j.blocks(['[video](/uploads/a.mp4"onerror="bad)'])[0].type, "p");
+  assert.equal(
+    j.blocks(["```", "[video](/uploads/a.mp4)", "```"])[0].type,
+    "code",
+  );
+});
 function setup(initial = "[]", denied = false) {
   const storage = new Map([["journal-saved", initial]]);
   const context = {

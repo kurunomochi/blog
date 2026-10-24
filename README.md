@@ -2,7 +2,7 @@
 
 [![Checks](https://github.com/kurunomochi/blog/actions/workflows/ci.yml/badge.svg)](https://github.com/kurunomochi/blog/actions/workflows/ci.yml)
 
-个人博客和 Blender 作品集，使用 **Rust + Axum** 后端与原生 HTML / CSS / JavaScript。无需前端构建，也无需数据库服务；文章和作品写入本地 JSON，上传图片保存在磁盘。
+个人博客和 Blender 作品集，使用 **Rust + Axum** 后端与原生 HTML / CSS / JavaScript。无需前端构建，也无需数据库服务；文章和作品写入本地 JSON，上传图片和 MP4 视频保存在磁盘。
 
 **在线网站：[nenumochi.top](https://nenumochi.top/)** · **作品集：[portfolio.html](https://nenumochi.top/portfolio.html)**
 
@@ -14,8 +14,8 @@
 - 独立文章页 `/blog/`：全文搜索、分类筛选、日期排序、每页 8 篇、收藏筛选；筛选条件和页码保存在 URL 中。
 - 文章阅读：自动目录、阅读进度、预计阅读时间、字号选择、复制链接、代码复制、相邻文章和同分类推荐。
 - 归档 `/archive.html` 与关于 `/about.html`：按年浏览记录，了解作者和联系方式。
-- 作品集：精选作品、分类和搜索、多图详情、点击放大。
-- 管理后台：文章与作品增删改、图片上传、封面和精选设置。
+- 作品集：精选作品、分类和搜索、图片与视频混排、图片放大与视频播放。
+- 管理后台：文章与作品增删改、图片 / MP4 上传、文章插入视频、封面和精选设置。
 - 公共页面：循环静音视频背景、可暂停播放、半透明阅读面板、移动端布局。
 - 后端：上传前鉴权、限流登录、会话撤销、内容校验、原子文件替换和优雅停止。
 
@@ -82,9 +82,9 @@ src/
   error.rs         统一业务错误响应
   storage.rs       JSON 读写、刷盘和原子替换
   posts.rs         文章接口及校验
-  works.rs         作品接口、图片上传及校验
+  works.rs         作品接口、图片 / 视频上传及校验
 public/
-  common.js        请求、登录状态、文本转义、图片 URL 校验
+  common.js        请求、登录状态、文本转义、媒体 URL 校验与播放器
   index.html       博客首页
   article.html     文章详情
   portfolio.html   作品集
@@ -105,7 +105,17 @@ deploy/            systemd、Nginx、Apache 配置示例
 
 文章在 `/admin.html` 编辑；目前按行保存为正文段落，纯文本输出，不执行 HTML。`image` 字段为兼容旧数据而保留，公共文章列表和详情不显示封面。
 
-作品在 `/studio.html` 编辑；上传图片或填写 HTTPS 图片地址，设置封面后保存。站内图片可使用 `/assets/…`、`/uploads/…`。
+作品在 `/studio.html` 编辑；上传图片或 MP4 视频，也可以填写 HTTPS 媒体地址，设置封面后保存。视频可以作为封面，也可以和图片混排；首页与作品集显示视频预览，详情页提供播放、音量、进度拖动与全屏控件。外链视频 URL 的路径须以 `.mp4` 结尾（可带查询参数），站内媒体可使用 `/assets/…`、`/uploads/…`。
+
+### 上传和发布视频
+
+1. Blender 导出时选择 **MPEG-4 容器 + H.264 视频编码**，有音轨时使用 AAC，建议开启 fast start。只改文件扩展名不能转换编码；服务器不进行转码。
+2. 在 `/studio.html` 上传作品视频，或在 `/admin.html` 编辑文章时使用「插入视频」。文章会在正文光标处插入独立的 `[video](/uploads/文件名.mp4)` 行，移动这一行即可调整位置，也支持 HTTPS MP4 直链。
+3. 上传成功后仍需点击「保存作品」或「保存文章」才会发布。批量上传中部分失败时，已成功上传的文件仍保留在编辑器中，可以保存或移除。
+
+图片最大 **20 MiB**，视频最大 **100 MiB**（界面简写为 MB），作品最多 30 个媒体文件。上传需要管理员登录；客户端为视频上传留出 10 分钟，不支持断点续传。播放器不自动播放，使用 `preload="metadata"`；不支持编码时可通过下方链接打开原文件。后端支持 `video/mp4` MIME、HEAD 和 HTTP Range 分段读取，允许拖动进度。
+
+媒体继续存放在原来的 `cover`、`images` 字段及 `data/uploads/` 中，无需迁移旧数据。MP4 校验包括容器品牌和顶层 box 边界、moov / mdat 存在性；不保证文件内所有帧或编码可解码。上传请求有硬性大小限制，但会在内存中缓冲整个文件；适用于单人管理的博客，大规模上传需改用流式存储或对象存储。
 
 将背景视频替换为 `public/media/blog-background.mp4`，推荐压缩后的 H.264 MP4。页面默认静音循环播放，切到后台标签页会暂停，返回后继续；用户手动暂停后不会自动恢复。浏览器禁止自动播放时可点击右下角按钮。
 
@@ -123,12 +133,12 @@ deploy/            systemd、Nginx、Apache 配置示例
 
 ## 数据、认证与限制
 
-- `data/posts.json`：文章数组；`data/works.json`：作品数组；`data/uploads/`：上传图片。文件不存在视为空集合，首次保存时创建。
+- `data/posts.json`：文章数组；`data/works.json`：作品数组；`data/uploads/`：上传图片与视频。文件不存在视为空集合，首次保存时创建。
 - 写入在集合锁内进行：先写同目录临时文件、`sync_all`，再重命名替换；写入失败不会修改内存中的内容。**同一数据目录只支持一个进程**，不支持多副本共享 JSON。
 - 备份整个数据目录。需要一致快照时暂停后台写入或停止服务；上传目录和两个 JSON 文件一起恢复。原子替换不能替代备份。
 - 登录令牌存放在浏览器 `sessionStorage`，最长 12 小时，最多 20 个会话；退出后撤销，服务重启后全部失效。生产通过 HTTPS 访问。
 - 登录全站共享每分钟 10 次的尝试额度，超限返回 `429` 和 `Retry-After: 60`，适合单人管理站点。
-- PNG / JPEG / WebP 按文件头识别，单张最多 **20 MiB**，每件作品最多 **30 张不同图片（含封面）**。不做图片转码或完整解码；上传前自行压缩。
+- PNG / JPEG / WebP 按文件头识别，单张最多 **20 MiB**；MP4 视频最多 **100 MiB**，每件作品最多 **30 个不同媒体文件（含封面）**。不做转码或完整解码；上传前自行压缩。
 - 删除作品或移除图片引用不会删除原始文件，避免破坏共享引用；未使用图片可在备份后人工清理。
 - JSON 请求默认上限 2 MiB。文章标题、摘要、正文分别最多 300 / 4000 / 1,000,000 UTF-8 字节，正文最多 2000 段；作品标题最多 200 字节、描述最多 30000 字节。
 - API 响应使用 `no-store`；静态文件使用 `no-cache`，允许客户端重新验证。内部存储错误只写服务器日志。
@@ -137,17 +147,17 @@ deploy/            systemd、Nginx、Apache 配置示例
 
 管理请求使用 `Authorization: Bearer <token>`。正常读请求返回 `200`，创建返回 `201`，删除和会话检查返回 `204`。
 
-| 方法               | 路径                | 登录     | 说明                                       |
-| ------------------ | ------------------- | -------- | ------------------------------------------ |
-| GET                | `/api/health`       | 否       | 健康检查                                   |
-| POST               | `/api/auth/login`   | 否       | JSON `{username,password}`，返回 `{token}` |
-| GET                | `/api/auth/session` | 是       | 检查当前会话                               |
-| POST               | `/api/auth/logout`  | 是       | 撤销当前令牌                               |
-| GET / POST         | `/api/posts`        | 写入需要 | 文章列表 / 创建                            |
-| GET / PUT / DELETE | `/api/posts/{id}`   | 写入需要 | 文章详情 / 更新 / 删除                     |
-| GET / POST         | `/api/works`        | 写入需要 | 作品列表 / 创建                            |
-| GET / PUT / DELETE | `/api/works/{id}`   | 写入需要 | 作品详情 / 更新 / 删除                     |
-| POST               | `/api/uploads`      | 是       | 原始图片字节，返回 `{url}`；不是 multipart |
+| 方法               | 路径                | 登录     | 说明                                              |
+| ------------------ | ------------------- | -------- | ------------------------------------------------- |
+| GET                | `/api/health`       | 否       | 健康检查                                          |
+| POST               | `/api/auth/login`   | 否       | JSON `{username,password}`，返回 `{token}`        |
+| GET                | `/api/auth/session` | 是       | 检查当前会话                                      |
+| POST               | `/api/auth/logout`  | 是       | 撤销当前令牌                                      |
+| GET / POST         | `/api/posts`        | 写入需要 | 文章列表 / 创建                                   |
+| GET / PUT / DELETE | `/api/posts/{id}`   | 写入需要 | 文章详情 / 更新 / 删除                            |
+| GET / POST         | `/api/works`        | 写入需要 | 作品列表 / 创建                                   |
+| GET / PUT / DELETE | `/api/works/{id}`   | 写入需要 | 作品详情 / 更新 / 删除                            |
+| POST               | `/api/uploads`      | 是       | 原始图片或 MP4 字节，返回 `{url}`；不是 multipart |
 
 文章字段：`title, date, category, excerpt, image, content: string[]`。作品字段：`title, date, category, description, cover, images: string[], software, featured`。创建时由服务器生成 `id`，更新使用完整对象。
 
@@ -201,7 +211,7 @@ Nginx：将 `deploy/nginx-locations.conf` 中的内容放入已有 HTTPS `server
 
 Apache：启用 `proxy` / `proxy_http`，将 `deploy/apache-proxy.conf` 放入已有 HTTPS `VirtualHost`，执行 `sudo apachectl configtest` 后再 reload。
 
-示例代理整个站点到端口 3001，博客、作品集与 API 共用后端；不要和旧的 `/api/` 路由同时生效。证书和域名由服务器现有配置管理。代理或 CDN 的上传限制也需要允许 20 MiB 请求。
+示例代理整个站点到端口 3001，博客、作品集与 API 共用后端；不要和旧的 `/api/` 路由同时生效。证书和域名由服务器现有配置管理。代理或 CDN 的上传限制也需要允许 **100 MiB（104857600 字节）** 请求；100 MB 的十进制限制略小于 100 MiB。示例配置已更新为 100 MiB，并延长代理超时。确认代理保留 Range / Content-Range 头，以支持视频进度拖动。
 
 ### 升级与回滚
 

@@ -49,6 +49,12 @@
         continue;
       }
       list = null;
+      if (block.type === "video") {
+        const wrap = document.createElement("div");
+        wrap.innerHTML = Blog.videoPlayer(block.text, article.title);
+        body.append(wrap);
+        continue;
+      }
       if (block.type === "code") {
         const wrap = document.createElement("div");
         wrap.className = "code-block";

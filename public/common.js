@@ -42,6 +42,42 @@
     }
     return "";
   }
+  function isVideo(value) {
+    return Boolean(imageUrl(value) && /\.mp4$/i.test(value.split(/[?#]/)[0]));
+  }
+  function mediaPreview(value, title = "") {
+    const src = escapeHtml(imageUrl(value));
+    if (!src) return "";
+    const label = escapeHtml(title);
+    return isVideo(value)
+      ? `<span class="video-preview"><video src="${src}" muted playsinline preload="metadata" aria-label="${label}"></video><span class="video-badge">▶ 视频</span></span>`
+      : `<img src="${src}" alt="${label}" loading="lazy" decoding="async">`;
+  }
+  function videoPlayer(value, title = "视频") {
+    if (!isVideo(value)) return "";
+    const src = escapeHtml(imageUrl(value));
+    return `<figure class="video-figure"><video class="media-player" src="${src}" controls playsinline preload="metadata" aria-label="${escapeHtml(title)}"></video><figcaption>无法播放？<a href="${src}" target="_blank" rel="noopener">打开视频文件 ↗</a></figcaption></figure>`;
+  }
+  async function uploadMedia(client, file) {
+    const video = /\.mp4$/i.test(file.name);
+    if (!video && !/\.(png|jpe?g|webp)$/i.test(file.name))
+      throw new Error("请选择 PNG、JPG、WebP 图片或 MP4 视频");
+    const limit = video ? 100 : 20;
+    if (!file.size || file.size > limit * 1024 * 1024)
+      throw new Error(`${file.name}：文件不能为空，最大 ${limit} MB`);
+    try {
+      return await client.request("/api/uploads", {
+        method: "POST",
+        headers: { "Content-Type": "application/octet-stream" },
+        body: file,
+        signal: AbortSignal.timeout(10 * 60 * 1000),
+      });
+    } catch (error) {
+      if (error.name === "TimeoutError")
+        throw new Error("上传超时，请检查网络或压缩视频后重试");
+      throw error;
+    }
+  }
   async function request(path, options = {}) {
     const response = await fetch(path, {
       ...options,
@@ -53,7 +89,7 @@
       const error = new Error(
         body.error ||
           (response.status === 413
-            ? "图片或内容超过大小限制"
+            ? "文件超过大小限制：图片最大 20 MB，MP4 视频最大 100 MB"
             : "请求失败，请稍后重试"),
       );
       error.status = response.status;
@@ -84,5 +120,14 @@
       },
     };
   }
-  window.Blog = Object.freeze({ escapeHtml, imageUrl, request, adminClient });
+  window.Blog = Object.freeze({
+    escapeHtml,
+    imageUrl,
+    isVideo,
+    mediaPreview,
+    videoPlayer,
+    uploadMedia,
+    request,
+    adminClient,
+  });
 })();

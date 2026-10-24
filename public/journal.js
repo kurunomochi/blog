@@ -114,6 +114,11 @@
         continue;
       }
       if (!line.trim()) continue;
+      const video = line.trim().match(/^\[video\]\(([^\s]+)\)$/);
+      if (video && Blog.isVideo(video[1])) {
+        result.push({ type: "video", text: video[1] });
+        continue;
+      }
       const heading = line.match(/^(#{1,3})\s+(.+)$/);
       const list = line.match(/^\s*(?:([-*])|(\d+)\.)\s+(.+)$/);
       if (heading)

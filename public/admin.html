@@ -80,11 +80,19 @@
               required
             ></textarea>
           </label>
+          <label
+            >插入视频<input id="post-video" type="file" accept="video/mp4,.mp4"
+          /></label>
+          <p>
+            MP4 最大 100 MB，推荐 H.264 + AAC
+            编码。上传后插入到正文光标处，保存文章后发布。
+          </p>
+          <p class="message" id="video-message" role="status"></p>
           <button type="submit">保存文章</button>
         </form>
       </section>
     </main>
-    <script src="/common.js?v=20261020-refactor"></script>
-    <script src="/admin.js?v=20261020-refactor"></script>
+    <script src="/common.js?v=20261024-video"></script>
+    <script src="/admin.js?v=20261024-video"></script>
   </body>
 </html>

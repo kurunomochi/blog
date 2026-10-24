@@ -10,6 +10,7 @@ const client = Blog.adminClient(signedOut);
 const request = (path, options) => client.request(path, options);
 let editingId = null;
 let posts = [];
+let uploading = false;
 
 function setMessage(element, message) {
   element.textContent = message;
@@ -63,6 +64,7 @@ async function loadPosts() {
 }
 
 function startEdit(id) {
+  if (uploading) return;
   const post = posts.find((item) => item.id === id);
   if (!post) return;
   editingId = id;
@@ -78,6 +80,7 @@ function startEdit(id) {
 }
 
 function startCreate() {
+  if (uploading) return;
   editingId = null;
   editorTitle.textContent = "新建文章";
   postForm.reset();
@@ -87,6 +90,7 @@ function startCreate() {
 }
 
 async function removePost(id) {
+  if (uploading) return;
   if (!confirm("确定删除这篇文章吗？")) return;
   try {
     await request(`/api/posts/${encodeURIComponent(id)}`, { method: "DELETE" });
@@ -120,6 +124,7 @@ loginForm.addEventListener("submit", async (event) => {
 
 postForm.addEventListener("submit", async (event) => {
   event.preventDefault();
+  if (uploading) return;
   const button = postForm.querySelector("button[type=submit]");
   button.disabled = true;
   const data = Object.fromEntries(new FormData(postForm));
@@ -147,6 +152,7 @@ postForm.addEventListener("submit", async (event) => {
 
 document.querySelector("#new-post").addEventListener("click", startCreate);
 document.querySelector("#cancel-edit").addEventListener("click", () => {
+  if (uploading) return;
   postForm.hidden = true;
 });
 document.querySelector("#logout").addEventListener("click", async () => {
@@ -164,4 +170,39 @@ if (client.hasToken())
   showDashboard().catch((error) => {
     signedOut();
     setMessage(loginMessage, error.message);
+  });
+
+document
+  .querySelector("#post-video")
+  .addEventListener("change", async (event) => {
+    const file = event.target.files[0];
+    if (!file || uploading) return;
+    const output = document.querySelector("#video-message");
+    if (!/\.mp4$/i.test(file.name)) {
+      setMessage(output, "请选择 MP4 视频");
+      event.target.value = "";
+      return;
+    }
+    const content = postForm.elements.content;
+    const start = content.selectionStart,
+      end = content.selectionEnd;
+    const controls = [...dashboard.querySelectorAll("button, input, textarea")];
+    const previous = controls.map((control) => control.disabled);
+    uploading = true;
+    controls.forEach((control) => (control.disabled = true));
+    setMessage(output, `正在上传 ${file.name}，请勿关闭页面…`);
+    try {
+      const result = await Blog.uploadMedia(client, file);
+      content.setRangeText(`\n[video](${result.url})\n`, start, end, "end");
+      setMessage(
+        output,
+        "视频已插入正文，保存文章后发布。可以移动这一行调整视频位置。",
+      );
+    } catch (error) {
+      setMessage(output, error.message);
+    } finally {
+      uploading = false;
+      controls.forEach((control, i) => (control.disabled = previous[i]));
+      event.target.value = "";
+    }
   });

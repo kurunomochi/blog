@@ -1,5 +1,5 @@
 const $ = (s) => document.querySelector(s);
-const { escapeHtml, imageUrl } = Blog;
+const { escapeHtml } = Blog;
 let works = [],
   category = "全部";
 $("#year").textContent = new Date().getFullYear();
@@ -35,7 +35,7 @@ function render() {
   $("#grid").innerHTML = visible
     .map(
       (w) =>
-        `<article class="work-card"><a class="thumb" href="/work.html?id=${encodeURIComponent(w.id)}"><img src="${escapeHtml(imageUrl(w.cover))}" alt="${escapeHtml(w.title)}" loading="lazy" decoding="async"></a><div class="card-meta"><div><h3><a href="/work.html?id=${encodeURIComponent(w.id)}">${escapeHtml(w.title)}</a></h3><p>${escapeHtml(w.category)} &nbsp; / &nbsp; ${escapeHtml(w.software)}</p></div><a class="card-arrow" href="/work.html?id=${encodeURIComponent(w.id)}" aria-label="查看${escapeHtml(w.title)}">↗</a></div></article>`,
+        `<article class="work-card"><a class="thumb" href="/work.html?id=${encodeURIComponent(w.id)}">${Blog.mediaPreview(w.cover, w.title)}</a><div class="card-meta"><div><h3><a href="/work.html?id=${encodeURIComponent(w.id)}">${escapeHtml(w.title)}</a></h3><p>${escapeHtml(w.category)} &nbsp; / &nbsp; ${escapeHtml(w.software)}</p></div><a class="card-arrow" href="/work.html?id=${encodeURIComponent(w.id)}" aria-label="查看${escapeHtml(w.title)}">↗</a></div></article>`,
     )
     .join("");
 }
@@ -45,7 +45,7 @@ async function init() {
     $("#work-count").textContent = String(works.length).padStart(2, "0");
     const hero = works.find((w) => w.featured) || works[0];
     $("#featured").innerHTML = hero
-      ? `<a class="hero-image" href="/work.html?id=${encodeURIComponent(hero.id)}"><img src="${escapeHtml(imageUrl(hero.cover))}" alt="${escapeHtml(hero.title)}" fetchpriority="high"><span class="hero-label">SELECTED WORK / 精选作品</span><span class="hero-open" aria-hidden="true">↗</span></a><div class="hero-caption"><div><h2>${escapeHtml(hero.title)}</h2><p>${escapeHtml(hero.category)} &nbsp; / &nbsp; ${escapeHtml(hero.software)}</p></div><span class="serial">01 — ${String(works.length).padStart(2, "0")}</span></div>`
+      ? `<a class="hero-image" href="/work.html?id=${encodeURIComponent(hero.id)}">${Blog.mediaPreview(hero.cover, hero.title)}<span class="hero-label">SELECTED WORK / 精选作品</span><span class="hero-open" aria-hidden="true">↗</span></a><div class="hero-caption"><div><h2>${escapeHtml(hero.title)}</h2><p>${escapeHtml(hero.category)} &nbsp; / &nbsp; ${escapeHtml(hero.software)}</p></div><span class="serial">01 — ${String(works.length).padStart(2, "0")}</span></div>`
       : '<div class="empty">新的作品即将抵达。</div>';
     filters();
     render();

@@ -6,8 +6,9 @@
     <meta name="robots" content="noindex" />
     <title>作品管理 · kurumochi</title>
     <link rel="stylesheet" href="/portfolio.css" />
-    <script src="/common.js?v=20261020-refactor"></script>
-    <script src="/studio.js?v=20261020-refactor" defer></script>
+    <script src="/common.js?v=20261024-video"></script>
+    <script src="/studio.js?v=20261024-video" defer></script>
+    <link rel="stylesheet" href="/media.css?v=20261024-video" />
   </head>
   <body>
     <header class="header wrap">
@@ -42,7 +43,9 @@
       </section>
       <section id="dashboard" hidden>
         <div class="studio-toolbar">
-          <p class="studio-note">上传你的渲染图，让新的作品在这里相遇。</p>
+          <p class="studio-note">
+            上传渲染图或动画视频，让新的作品在这里相遇。
+          </p>
           <div class="studio-actions">
             <button id="new-work" class="btn" type="button">＋ 新建作品</button
             ><button id="logout" class="btn secondary" type="button">
@@ -59,7 +62,7 @@
             </button>
           </div>
           <p class="studio-note">
-            保存后会立即显示在公开作品集。第一张图片默认为封面，也可以手动选择。
+            保存后会立即显示在公开作品集。第一个图片或视频默认为封面，也可以手动选择。
           </p>
           <div class="form-grid">
             <label
@@ -90,24 +93,24 @@
           </label>
           <div class="upload-area">
             <label
-              >上传作品图片<input
+              >上传图片或视频<input
                 id="files"
                 type="file"
-                accept="image/png,image/jpeg,image/webp"
+                accept="image/png,image/jpeg,image/webp,video/mp4,.mp4"
                 multiple
             /></label>
             <p>
-              PNG / JPG / WebP · 单张最大 20 MB · 最多 30
-              张。上传后点击「保存作品」发布。
+              图片 PNG / JPG / WebP 最大 20 MB；MP4 视频最大 100 MB。推荐 H.264
+              + AAC 编码，最多 30 个文件。上传后点击「保存作品」发布。
             </p>
             <div id="image-list" class="image-list"></div>
             <label
-              >也可以使用已有图片地址<input
+              >也可以使用已有图片或 MP4 视频地址<input
                 id="image-url"
                 type="url"
                 placeholder="https://…" /></label
             ><button id="add-url" class="btn secondary" type="button">
-              添加图片地址
+              添加媒体地址
             </button>
           </div>
           <label class="check"

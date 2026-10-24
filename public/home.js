@@ -29,7 +29,7 @@
             .slice(0, 3)
             .map(
               (w) =>
-                `<a class="home-work" href="/work.html?id=${esc(encodeURIComponent(w.id))}">${Blog.imageUrl(w.cover) ? `<img src="${esc(Blog.imageUrl(w.cover))}" alt="${esc(w.title)}" loading="lazy" width="640" height="400" />` : '<div class="work-placeholder">BLENDER</div>'}<div><span>${esc(w.category)}</span><h3>${esc(w.title)} ↗</h3></div></a>`,
+                `<a class="home-work" href="/work.html?id=${esc(encodeURIComponent(w.id))}">${Blog.imageUrl(w.cover) ? Blog.mediaPreview(w.cover, w.title) : '<div class="work-placeholder">BLENDER</div>'}<div><span>${esc(w.category)}</span><h3>${esc(w.title)} ↗</h3></div></a>`,
             )
             .join("")
         : '<p class="empty-state">新作品正在制作中。</p>';

@@ -4,6 +4,52 @@ import { readFile } from "node:fs/promises";
 import vm from "node:vm";
 
 const source = await readFile("public/common.js", "utf8");
+test("video detection and markup validate URLs and keep images compatible", () => {
+  const blog = setup();
+  for (const url of ["/uploads/a.mp4", "https://example.com/a.MP4?key=1&v=2"])
+    assert.equal(blog.isVideo(url), true);
+  for (const url of [
+    "javascript:a.mp4",
+    "/uploads/../a.mp4",
+    "https://example.com/a.png?x=.mp4",
+    '/uploads/a.mp4"onerror="bad',
+  ])
+    assert.equal(blog.isVideo(url), false);
+  assert.match(
+    blog.mediaPreview("/uploads/a.png", "<title>"),
+    /<img.*&lt;title&gt;/,
+  );
+  assert.match(
+    blog.videoPlayer("/uploads/a.mp4", "<title>"),
+    /controls playsinline preload="metadata"/,
+  );
+  assert.doesNotMatch(blog.videoPlayer("/uploads/a.mp4"), /autoplay/);
+  assert.equal(blog.videoPlayer("javascript:a.mp4"), "");
+});
+
+test("upload validates type and limits before making a request", async () => {
+  const blog = setup();
+  let calls = 0;
+  const client = {
+    request: async () => {
+      calls++;
+      return { url: "/uploads/a.mp4" };
+    },
+  };
+  await assert.rejects(
+    blog.uploadMedia(client, { name: "a.png", size: 21 * 1024 * 1024 }),
+    /20 MB/,
+  );
+  await assert.rejects(
+    blog.uploadMedia(client, { name: "a.mp4", size: 101 * 1024 * 1024 }),
+    /100 MB/,
+  );
+  await assert.rejects(blog.uploadMedia(client, { name: "a.html", size: 10 }));
+  await assert.rejects(blog.uploadMedia(client, { name: "a.mp4", size: 0 }));
+  assert.equal(calls, 0);
+  await blog.uploadMedia(client, { name: "a.MP4", size: 25 * 1024 * 1024 });
+  assert.equal(calls, 1);
+});
 function setup(fetch) {
   const storage = new Map();
   const context = {

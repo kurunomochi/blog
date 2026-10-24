@@ -22,10 +22,10 @@ async function load() {
     ? works
         .map(
           (w) =>
-            `<article class="studio-row"><img src="${esc(Blog.imageUrl(w.cover))}" alt=""><div class="row-copy"><h3>${esc(w.title)} ${w.featured ? "· 精选" : ""}</h3><p>${esc(w.category)} · ${esc(w.date)}</p></div><div class="studio-actions"><a class="btn secondary" href="/work.html?id=${encodeURIComponent(w.id)}" target="_blank" rel="noopener">查看</a><button class="btn secondary" type="button" data-edit="${esc(w.id)}">编辑</button><button class="btn secondary" type="button" data-delete="${esc(w.id)}">删除</button></div></article>`,
+            `<article class="studio-row">${Blog.mediaPreview(w.cover, w.title)}<div class="row-copy"><h3>${esc(w.title)} ${w.featured ? "· 精选" : ""}</h3><p>${esc(w.category)} · ${esc(w.date)}</p></div><div class="studio-actions"><a class="btn secondary" href="/work.html?id=${encodeURIComponent(w.id)}" target="_blank" rel="noopener">查看</a><button class="btn secondary" type="button" data-edit="${esc(w.id)}">编辑</button><button class="btn secondary" type="button" data-delete="${esc(w.id)}">删除</button></div></article>`,
         )
         .join("")
-    : '<p class="empty">还没有作品，上传你的第一张渲染图吧。</p>';
+    : '<p class="empty">还没有作品，上传你的第一件图片或视频作品吧。</p>';
   document
     .querySelectorAll("[data-edit]")
     .forEach(
@@ -36,10 +36,10 @@ async function load() {
     (b) =>
       (b.onclick = async () => {
         if (uploading) {
-          message("#dashboard-message", "请等待图片上传完成");
+          message("#dashboard-message", "请等待媒体上传完成");
           return;
         }
-        if (!confirm("确定删除这件作品？原始上传图片将保留。")) return;
+        if (!confirm("确定删除这件作品？原始上传文件将保留。")) return;
         b.disabled = true;
         try {
           await api("/api/works/" + encodeURIComponent(b.dataset.delete), {
@@ -65,7 +65,7 @@ function renderImages() {
   $("#image-list").innerHTML = images
     .map(
       (url, i) =>
-        `<div class="image-item"><img src="${esc(Blog.imageUrl(url))}" alt="作品图片 ${i + 1}"><button type="button" class="${url === cover ? "selected" : ""}" data-cover="${i}">${url === cover ? "✓ 当前封面" : "设为封面"}</button><button type="button" data-remove="${i}">移除</button></div>`,
+        `<div class="image-item">${Blog.isVideo(url) ? Blog.videoPlayer(url, `作品视频 ${i + 1}`) : Blog.mediaPreview(url, `作品图片 ${i + 1}`)}<button type="button" class="${url === cover ? "selected" : ""}" data-cover="${i}">${url === cover ? "✓ 当前封面" : "设为封面"}</button><button type="button" data-remove="${i}">移除</button></div>`,
     )
     .join("");
   $("#image-list")
@@ -73,6 +73,7 @@ function renderImages() {
     .forEach(
       (b) =>
         (b.onclick = () => {
+          if (uploading) return;
           cover = images[+b.dataset.cover];
           renderImages();
         }),
@@ -82,6 +83,7 @@ function renderImages() {
     .forEach(
       (b) =>
         (b.onclick = () => {
+          if (uploading) return;
           const removed = images.splice(+b.dataset.remove, 1)[0];
           if (removed === cover) cover = images[0] || "";
           renderImages();
@@ -90,7 +92,7 @@ function renderImages() {
 }
 function edit(work) {
   if (uploading) {
-    message("#editor-message", "请等待图片上传完成");
+    message("#editor-message", "请等待媒体上传完成");
     return;
   }
   editing = work?.id || null;
@@ -145,13 +147,17 @@ $("#cancel").onclick = () => {
   editor.hidden = true;
 };
 $("#add-url").onclick = () => {
+  if (uploading) return;
   const url = $("#image-url").value.trim();
   if (!url.startsWith("https://") || !Blog.imageUrl(url)) {
-    message("#editor-message", "请使用 HTTPS 图片地址");
+    message(
+      "#editor-message",
+      "请使用 HTTPS 图片或 MP4 视频地址（视频路径须以 .mp4 结尾）",
+    );
     return;
   }
   if (images.length >= 30) {
-    message("#editor-message", "最多添加 30 张图片");
+    message("#editor-message", "最多添加 30 个图片或视频");
     return;
   }
   if (!images.includes(url)) images.push(url);
@@ -163,7 +169,7 @@ $("#files").onchange = async (e) => {
   const files = [...e.target.files];
   if (!files.length) return;
   if (images.length + files.length > 30) {
-    message("#editor-message", "每件作品最多 30 张图片");
+    message("#editor-message", "每件作品最多 30 个图片或视频");
     return;
   }
   uploading = true;
@@ -171,21 +177,20 @@ $("#files").onchange = async (e) => {
   $("#new-work").disabled = true;
   $("#cancel").disabled = true;
   $("#files").disabled = true;
+  $("#add-url").disabled = true;
+  $("#logout").disabled = true;
   try {
     for (let i = 0; i < files.length; i++) {
-      if (files[i].size > 20 * 1024 * 1024)
-        throw new Error(files[i].name + " 超过 20 MB");
-      message("#editor-message", `正在上传 ${i + 1} / ${files.length}…`);
-      const result = await api("/api/uploads", {
-        method: "POST",
-        headers: { "Content-Type": "application/octet-stream" },
-        body: files[i],
-      });
+      message(
+        "#editor-message",
+        `正在上传 ${i + 1} / ${files.length}：${files[i].name}，请勿关闭页面…`,
+      );
+      const result = await Blog.uploadMedia(client, files[i]);
       images.push(result.url);
       cover = cover || result.url;
       renderImages();
     }
-    message("#editor-message", "图片已上传，保存作品后发布。");
+    message("#editor-message", "媒体已上传，保存作品后发布。");
   } catch (error) {
     message("#editor-message", error.message);
   } finally {
@@ -194,6 +199,8 @@ $("#files").onchange = async (e) => {
     $("#new-work").disabled = false;
     $("#cancel").disabled = false;
     $("#files").disabled = false;
+    $("#add-url").disabled = false;
+    $("#logout").disabled = false;
     e.target.value = "";
   }
 };
@@ -201,7 +208,7 @@ editor.onsubmit = async (e) => {
   e.preventDefault();
   if (uploading) return;
   if (!cover) {
-    message("#editor-message", "请至少添加一张作品图片");
+    message("#editor-message", "请至少添加一个作品图片或视频");
     return;
   }
   $("#save").disabled = true;

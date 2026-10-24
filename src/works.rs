@@ -10,6 +10,9 @@ use serde::{Deserialize, Serialize};
 use tokio::fs;
 use uuid::Uuid;
 
+const IMAGE_LIMIT: usize = 20 * 1024 * 1024;
+const VIDEO_LIMIT: usize = 100 * 1024 * 1024;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Work {
     pub id: String,
@@ -46,7 +49,7 @@ pub fn protected_routes() -> Router<SharedState> {
         .route("/works/{id}", put(update).delete(remove))
         .route(
             "/uploads",
-            post(upload).layer(DefaultBodyLimit::max(20 * 1024 * 1024)),
+            post(upload).layer(DefaultBodyLimit::max(VIDEO_LIMIT)),
         )
 }
 pub fn safe_image(url: &str) -> bool {
@@ -85,7 +88,7 @@ fn validate(input: &WorkInput) -> Result<(), AppError> {
         || input.images.iter().any(|url| !safe_image(url))
     {
         return Err(AppError::BadRequest(
-            "请检查标题、分类及图片路径（站内路径或 HTTPS URL），最多 30 张图片".into(),
+            "请检查标题、分类及媒体路径（站内路径或 HTTPS URL），最多 30 个图片或视频".into(),
         ));
     }
     Ok(())
@@ -169,9 +172,16 @@ async fn upload(
     State(state): State<SharedState>,
     bytes: Bytes,
 ) -> Result<(StatusCode, Json<serde_json::Value>), AppError> {
-    let extension = image_extension(&bytes).ok_or_else(|| {
-        AppError::BadRequest("仅支持 PNG、JPEG、WebP 图片，单张最大 20 MB".into())
-    })?;
+    let extension = if is_mp4(&bytes) {
+        "mp4"
+    } else {
+        if bytes.len() > IMAGE_LIMIT {
+            return Err(AppError::PayloadTooLarge);
+        }
+        image_extension(&bytes).ok_or_else(|| {
+            AppError::BadRequest("仅支持 PNG、JPEG、WebP 图片（20 MB）和 MP4 视频（100 MB）".into())
+        })?
+    };
     let filename = format!("{}.{}", Uuid::new_v4(), extension);
     fs::write(state.uploads_dir.join(&filename), &bytes)
         .await
@@ -182,9 +192,105 @@ async fn upload(
     ))
 }
 
+// Validate ISO BMFF boxes and MP4 brands, rather than trusting the filename/MIME.
+// This recognizes the container; browsers still need a supported video codec.
+fn is_mp4(bytes: &[u8]) -> bool {
+    let mut offset = 0;
+    let (mut mp4, mut movie, mut media) = (false, false, false);
+    while offset < bytes.len() {
+        let remaining = &bytes[offset..];
+        if remaining.len() < 8 {
+            return false;
+        }
+        let size = u32::from_be_bytes(remaining[..4].try_into().unwrap());
+        let kind = &remaining[4..8];
+        let (size, header) = match size {
+            0 => (remaining.len(), 8),
+            1 if remaining.len() >= 16 => {
+                let Ok(size) =
+                    usize::try_from(u64::from_be_bytes(remaining[8..16].try_into().unwrap()))
+                else {
+                    return false;
+                };
+                (size, 16)
+            }
+            1 => return false,
+            size => (size as usize, 8),
+        };
+        if size < header || size > remaining.len() {
+            return false;
+        }
+        let payload = &remaining[header..size];
+        match kind {
+            b"ftyp" => {
+                if payload.len() < 8 || !payload.len().is_multiple_of(4) {
+                    return false;
+                }
+                let brands: [&[u8]; 9] = [
+                    b"isom", b"iso2", b"iso5", b"iso6", b"mp41", b"mp42", b"avc1", b"M4V ", b"MSNV",
+                ];
+                mp4 |= brands.contains(&&payload[..4])
+                    || payload[8..]
+                        .chunks_exact(4)
+                        .any(|brand| brands.contains(&brand));
+            }
+            b"moov" => movie = !payload.is_empty(),
+            b"mdat" => media = !payload.is_empty(),
+            _ => {}
+        }
+        offset += size;
+    }
+    mp4 && movie && media
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn mp4_box(kind: &[u8; 4], payload: &[u8]) -> Vec<u8> {
+        let mut bytes = ((payload.len() + 8) as u32).to_be_bytes().to_vec();
+        bytes.extend(kind);
+        bytes.extend(payload);
+        bytes
+    }
+
+    #[test]
+    fn mp4_requires_valid_boxes_brand_and_media() {
+        let ftyp = mp4_box(b"ftyp", b"isom\0\0\0\0mp42");
+        let moov = mp4_box(b"moov", b"movie");
+        let mdat = mp4_box(b"mdat", b"frame");
+        let valid = [ftyp.clone(), moov.clone(), mdat.clone()].concat();
+        assert!(is_mp4(&valid));
+        for end in 0..valid.len() {
+            assert!(!is_mp4(&valid[..end]));
+        }
+        assert!(!is_mp4(&[ftyp.clone(), mdat.clone()].concat()));
+        assert!(!is_mp4(&[ftyp, moov.clone()].concat()));
+        let avif = mp4_box(b"ftyp", b"avif\0\0\0\0avif");
+        assert!(!is_mp4(&[avif, moov.clone(), mdat.clone()].concat()));
+        let compatible = mp4_box(b"ftyp", b"xxxx\0\0\0\0isom");
+        assert!(is_mp4(&[compatible.clone(), moov.clone(), mdat].concat()));
+        let extended = [
+            1u32.to_be_bytes().as_slice(),
+            b"mdat",
+            &17u64.to_be_bytes(),
+            b"x",
+        ]
+        .concat();
+        assert!(is_mp4(
+            &[compatible.clone(), moov.clone(), extended].concat()
+        ));
+        let to_end = [0u32.to_be_bytes().as_slice(), b"mdat", b"x"].concat();
+        assert!(is_mp4(&[compatible, moov, to_end].concat()));
+        assert!(!is_mp4(
+            &[
+                1u32.to_be_bytes().as_slice(),
+                b"mdat",
+                &u64::MAX.to_be_bytes()
+            ]
+            .concat()
+        ));
+    }
     #[test]
     fn rejects_active_content_and_path_traversal() {
         for url in [

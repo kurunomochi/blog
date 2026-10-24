@@ -12,8 +12,10 @@ async function init() {
     const w = await Blog.request("/api/works/" + encodeURIComponent(id));
     document.title = w.title + " · kurumochi";
     const photo = (url, lazy = false) =>
-      `<button class="zoom-button" type="button" aria-label="放大查看：${esc(w.title)}" data-image="${esc(safe(url))}"><img class="detail-image" src="${esc(safe(url))}" alt="${esc(w.title)}" ${lazy ? 'loading="lazy"' : ""}></button>`;
-    root.innerHTML = `<section class="detail-top"><a class="back" href="/portfolio.html#works">← 所有作品</a><div class="detail-head"><div><p class="eyebrow">A BLENDER EXPLORATION</p><h1>${esc(w.title)}</h1></div><dl class="detail-meta"><div><dt>CATEGORY / 分类</dt><dd>${esc(w.category)}</dd></div><div><dt>TOOL / 工具</dt><dd>${esc(w.software)}</dd></div><div><dt>DATE / 日期</dt><dd>${esc(w.date)}</dd></div></dl></div></section>${photo(w.cover)}<section class="detail-copy"><p class="eyebrow">ABOUT THE WORK / 关于作品</p><p>${esc(w.description)}</p></section><section class="detail-gallery" aria-label="更多作品图片">${[
+      Blog.isVideo(url)
+        ? Blog.videoPlayer(url, w.title)
+        : `<button class="zoom-button" type="button" aria-label="放大查看：${esc(w.title)}" data-image="${esc(safe(url))}"><img class="detail-image" src="${esc(safe(url))}" alt="${esc(w.title)}" ${lazy ? 'loading="lazy"' : ""}></button>`;
+    root.innerHTML = `<section class="detail-top"><a class="back" href="/portfolio.html#works">← 所有作品</a><div class="detail-head"><div><p class="eyebrow">A BLENDER EXPLORATION</p><h1>${esc(w.title)}</h1></div><dl class="detail-meta"><div><dt>CATEGORY / 分类</dt><dd>${esc(w.category)}</dd></div><div><dt>TOOL / 工具</dt><dd>${esc(w.software)}</dd></div><div><dt>DATE / 日期</dt><dd>${esc(w.date)}</dd></div></dl></div></section>${photo(w.cover)}<section class="detail-copy"><p class="eyebrow">ABOUT THE WORK / 关于作品</p><p>${esc(w.description)}</p></section><section class="detail-gallery" aria-label="更多作品图片和视频">${[
       ...new Set(w.images),
     ]
       .filter((url) => url !== w.cover)

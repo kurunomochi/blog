@@ -197,13 +197,85 @@ try {
   assert.equal(response.status, 200);
   assert.equal(response.headers.get("x-content-type-options"), "nosniff");
   assert.deepEqual(Buffer.from(await response.arrayBuffer()), png);
+  // Use an actual encoded video, not just a fabricated extension or header.
+  const mp4 = await readFile("public/media/blog-background.mp4");
+  response = await call("/api/uploads", {
+    method: "POST",
+    headers: auth(token),
+    body: mp4,
+  });
+  assert.equal(response.status, 201);
+  const video = await response.json();
+  assert.match(video.url, /^\/uploads\/[a-f0-9-]+\.mp4$/);
+  response = await call(video.url, { method: "HEAD" });
+  assert.equal(response.headers.get("content-type"), "video/mp4");
+  assert.equal(Number(response.headers.get("content-length")), mp4.length);
+  response = await call(video.url, { headers: { Range: "bytes=0-1023" } });
+  assert.equal(response.status, 206);
+  assert.equal(
+    response.headers.get("content-range"),
+    `bytes 0-1023/${mp4.length}`,
+  );
+  assert.deepEqual(
+    Buffer.from(await response.arrayBuffer()),
+    mp4.subarray(0, 1024),
+  );
+  assert.equal(
+    (await call(video.url, { headers: { Range: `bytes=${mp4.length}-` } }))
+      .status,
+    416,
+  );
+  assert.equal(
+    (
+      await call("/api/uploads", {
+        method: "POST",
+        headers: auth(token),
+        body: mp4.subarray(0, 64),
+      })
+    ).status,
+    400,
+  );
+  // A valid container larger than the image limit must still upload as video.
+  const free = Buffer.alloc(21 * 1024 * 1024);
+  free.writeUInt32BE(free.length);
+  free.write("free", 4);
+  response = await call("/api/uploads", {
+    method: "POST",
+    headers: auth(token),
+    body: Buffer.concat([mp4, free]),
+  });
+  assert.equal(response.status, 201);
+  assert.equal(
+    (
+      await call("/api/uploads", {
+        method: "POST",
+        headers: auth(token),
+        body: Buffer.alloc(100 * 1024 * 1024 + 1),
+      })
+    ).status,
+    413,
+  );
+  response = await call(
+    "/api/works/" + work.id,
+    json(
+      {
+        ...input,
+        title: "更新后的作品",
+        cover: video.url,
+        images: [upload.url],
+      },
+      token,
+      "PUT",
+    ),
+  );
+  assert.equal(response.status, 200);
   const post = {
     title: "兼容测试",
     excerpt: "摘要",
     category: "STUDY",
     date: "2026.10.19",
     image: "assets/cover-featured.svg",
-    content: ["正文"],
+    content: ["正文", `[video](${video.url})`],
   };
   assert.equal(
     (await call("/api/posts", json({ ...post, content: ["  "] }, token)))
@@ -248,6 +320,15 @@ try {
     "更新后的作品",
   );
   assert.equal((await call(upload.url)).status, 200);
+  assert.equal((await call(video.url)).status, 200);
+  assert.equal(
+    (await (await call("/api/works/" + work.id)).json()).cover,
+    video.url,
+  );
+  assert.deepEqual(
+    (await (await call("/api/posts/" + savedPost.id)).json()).content,
+    post.content,
+  );
   assert.equal((await (await call("/api/posts")).json()).length, 9);
   assert.equal(
     (await call("/api/auth/session", { headers: auth(token) })).status,
