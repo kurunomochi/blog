@@ -1,0 +1,6 @@
+**/target/
+*.db
+*.db.bak
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm

@@ -243,3 +243,13 @@ node tests/api-smoke.mjs
 ## 仓库内容
 
 提交网站源码、构建配置和公共媒体；`.gitignore` 排除密码文件、运行数据、编译输出、Blender 工程和本机部署记录。仓库暂未指定开源许可证；作品图片、视频与个人文案的使用请联系作者。
+
+## Rust Reboot：系统复习与进阶项目
+
+新增独立 Rust 学习模块：30 章详细复习、30 个可运行示例、60 道自测、12 个练习、8 节项目导读，以及 Rust Trail CLI 与 Rust Taskboard（Axum + SQLite + Tokio）。
+
+- [在线 HTML 手册](https://nenumochi.top/rust-reboot/) · [仓库 HTML](public/rust-reboot/index.html)
+- [运行与学习说明](public/rust-reboot/README.md) · [Taskboard 项目](public/rust-reboot/taskboard/README.md)
+- [完整下载包](public/rust-reboot/rust-reboot.zip) · [配套博客正文](docs/rust-reboot/BLOG.md)
+
+HTML 支持离线阅读、笔记、学习进度和错题复习；源码使用独立 Cargo 包，不影响原项目构建。测试命令与初始练习失败的说明见学习模块 README。
