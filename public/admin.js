@@ -11,6 +11,22 @@ const request = (path, options) => client.request(path, options);
 let editingId = null;
 let posts = [];
 let uploading = false;
+let saving = false;
+const reviewMode =
+  new URLSearchParams(location.search).get("module") === "reviews";
+const itemName = reviewMode ? "复盘" : "文章";
+if (reviewMode) {
+  document.title = "每日复盘管理 · kurumochi";
+  document.querySelector(".admin-header h1").textContent = "每日复盘管理";
+  document.querySelector(".dashboard-toolbar h2").textContent = "复盘列表";
+  document.querySelector("#new-post").textContent = "写今日复盘";
+  postForm.querySelector('button[type="submit"]').textContent =
+    "保存并发布复盘";
+  postForm.elements.date.type = "date";
+  postForm.elements.category.closest("label").hidden = true;
+  postForm.elements.image.closest("label").hidden = true;
+  postForm.elements.image.required = false;
+}
 
 function setMessage(element, message) {
   element.textContent = message;
@@ -56,7 +72,16 @@ const escapeHtml = Blog.escapeHtml;
 
 async function loadPosts() {
   try {
-    posts = await request("/api/posts");
+    const all = await request("/api/posts");
+    posts = reviewMode
+      ? all
+          .filter((post) => post.category === "每日复盘")
+          .sort((a, b) =>
+            b.date
+              .replaceAll(".", "-")
+              .localeCompare(a.date.replaceAll(".", "-")),
+          )
+      : all;
     renderPosts();
   } catch (error) {
     setMessage(dashboardMessage, error.message);
@@ -64,13 +89,15 @@ async function loadPosts() {
 }
 
 function startEdit(id) {
-  if (uploading) return;
+  if (uploading || saving) return;
   const post = posts.find((item) => item.id === id);
   if (!post) return;
   editingId = id;
-  editorTitle.textContent = "编辑文章";
+  postForm.elements.image.required = post.category !== "每日复盘";
+  editorTitle.textContent = `编辑${itemName}`;
   for (const [name, value] of Object.entries({
     ...post,
+    date: reviewMode ? post.date.replaceAll(".", "-") : post.date,
     content: post.content.join("\n"),
   })) {
     if (postForm.elements[name]) postForm.elements[name].value = value;
@@ -80,21 +107,37 @@ function startEdit(id) {
 }
 
 function startCreate() {
-  if (uploading) return;
+  if (uploading || saving) return;
   editingId = null;
-  editorTitle.textContent = "新建文章";
+  editorTitle.textContent = `新建${itemName}`;
   postForm.reset();
+  postForm.elements.image.required = !reviewMode;
   postForm.elements.image.value = "assets/cover-featured.svg";
+  if (reviewMode) {
+    const date = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Shanghai",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date());
+    postForm.elements.date.value = date;
+    postForm.elements.title.value = `${date} 每日复盘`;
+    postForm.elements.category.value = "每日复盘";
+    postForm.elements.image.value = "";
+    postForm.elements.image.required = false;
+    postForm.elements.content.value =
+      "# 今日目标\n\n# 完成情况\n\n# 问题与收获\n\n# 明日计划\n";
+  }
   postForm.hidden = false;
   postForm.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 async function removePost(id) {
-  if (uploading) return;
-  if (!confirm("确定删除这篇文章吗？")) return;
+  if (uploading || saving) return;
+  if (!confirm(`确定删除这篇${itemName}吗？`)) return;
   try {
     await request(`/api/posts/${encodeURIComponent(id)}`, { method: "DELETE" });
-    setMessage(dashboardMessage, "文章已删除");
+    setMessage(dashboardMessage, `${itemName}已删除`);
     await loadPosts();
   } catch (error) {
     setMessage(dashboardMessage, error.message);
@@ -124,14 +167,19 @@ loginForm.addEventListener("submit", async (event) => {
 
 postForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  if (uploading) return;
+  if (uploading || saving) return;
   const button = postForm.querySelector("button[type=submit]");
   button.disabled = true;
   const data = Object.fromEntries(new FormData(postForm));
+  if (reviewMode) {
+    data.category = "每日复盘";
+    data.date = data.date.replaceAll("-", ".");
+  }
   data.content = data.content
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean);
+  saving = true;
   try {
     const path = editingId
       ? `/api/posts/${encodeURIComponent(editingId)}`
@@ -141,18 +189,22 @@ postForm.addEventListener("submit", async (event) => {
       body: JSON.stringify(data),
     });
     postForm.hidden = true;
-    setMessage(dashboardMessage, editingId ? "文章已更新" : "文章已创建");
+    setMessage(
+      dashboardMessage,
+      editingId ? `${itemName}已更新` : `${itemName}已发布`,
+    );
     await loadPosts();
   } catch (error) {
     setMessage(dashboardMessage, error.message);
   } finally {
+    saving = false;
     button.disabled = false;
   }
 });
 
 document.querySelector("#new-post").addEventListener("click", startCreate);
 document.querySelector("#cancel-edit").addEventListener("click", () => {
-  if (uploading) return;
+  if (uploading || saving) return;
   postForm.hidden = true;
 });
 document.querySelector("#logout").addEventListener("click", async () => {

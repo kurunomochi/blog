@@ -33,6 +33,8 @@ pub struct WorkInput {
     pub software: String,
     #[serde(default)]
     pub featured: bool,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub model: String,
 }
 fn default_software() -> String {
     "Blender".into()
@@ -86,6 +88,7 @@ fn validate(input: &WorkInput) -> Result<(), AppError> {
             .len()
             > 30
         || input.images.iter().any(|url| !safe_image(url))
+        || (!input.model.is_empty() && !crate::models::safe_model_url(&input.model))
     {
         return Err(AppError::BadRequest(
             "请检查标题、分类及媒体路径（站内路径或 HTTPS URL），最多 30 个图片或视频".into(),
@@ -115,6 +118,7 @@ async fn create(
     Json(input): Json<WorkInput>,
 ) -> Result<(StatusCode, Json<Work>), AppError> {
     validate(&input)?;
+    crate::models::check_model(&state, &input.model).await?;
     let work = Work {
         id: Uuid::new_v4().to_string(),
         details: input,
@@ -132,6 +136,7 @@ async fn update(
     Json(input): Json<WorkInput>,
 ) -> Result<Json<Work>, AppError> {
     validate(&input)?;
+    crate::models::check_model(&state, &input.model).await?;
     let mut works = state.works.write().await;
     let mut updated = works.clone();
     let work = updated

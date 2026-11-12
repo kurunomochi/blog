@@ -45,15 +45,27 @@
 .journal-site :is(h1, h2, h3, p, a) {
   overflow-wrap: anywhere;
 }
-.journal-site .home-title {
-  margin: 12px 0 20px;
-  font-size: clamp(36px, 5.5vw, 66px);
-  letter-spacing: -0.05em;
-  font-weight: 650;
-  line-height: 1.25;
+.journal-site .intro-section {
+  min-height: auto;
+  margin-top: clamp(20px, 3vw, 36px);
+  padding-block: clamp(28px, 4vw, 44px);
 }
-.home-title span {
-  color: #65834d;
+.journal-site .intro-text {
+  max-width: 32em;
+  margin: 12px 0 20px;
+  font-size: clamp(19px, 2.3vw, 27px);
+  line-height: 1.6;
+  font-weight: 550;
+  letter-spacing: normal;
+}
+.site-footer .footer-contact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+  font-size: 16px;
+}
+.footer-contact a:hover {
+  text-decoration: underline;
 }
 .hero-actions {
   display: flex;
@@ -436,9 +448,7 @@
   font-size: 12px;
 }
 .about-page-info {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 50px;
+  display: block;
 }
 .article-breadcrumb {
   display: flex;

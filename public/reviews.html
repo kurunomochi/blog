@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta
+      name="description"
+      content="kurumochi 的每日复盘，记录目标、完成情况、收获与明日计划。"
+    />
+    <title>每日复盘 · kurumochi</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="stylesheet" href="/styles.css?v=20261021" />
+    <link rel="stylesheet" href="/season-theme.css?v=20261020-about-v2" />
+    <link rel="stylesheet" href="/journal.css?v=20261103" />
+    <script src="/season-theme.js?v=20261021" defer></script>
+    <style>
+      .filter-toolbar {
+        align-items: end;
+      }
+      .filter-toolbar label {
+        display: grid;
+        gap: 8px;
+      }
+      .filter-toolbar label:first-child {
+        flex: 1;
+      }
+      .filter-toolbar input {
+        width: 100%;
+        min-height: 44px;
+        padding: 10px 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.65);
+        color: var(--ink);
+        font: inherit;
+        box-sizing: border-box;
+      }
+      .filter-toolbar input:focus-visible {
+        outline: 2px solid #486a48;
+        outline-offset: 2px;
+      }
+      .list-pagination button:disabled {
+        opacity: 0.45;
+        cursor: default;
+      }
+      @media (max-width: 640px) {
+        .filter-toolbar {
+          display: grid;
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body class="blog-theme journal-site" data-page="reviews" id="top">
+    <div class="season-background" aria-hidden="true">
+      <video
+        autoplay
+        muted
+        loop
+        playsinline
+        preload="metadata"
+        tabindex="-1"
+        disablepictureinpicture
+        disableremoteplayback
+      >
+        <source src="/media/blog-background.mp4" type="video/mp4" />
+      </video>
+    </div>
+    <button
+      id="background-control"
+      class="background-control"
+      type="button"
+      hidden
+    >
+      暂停背景</button
+    ><a class="site-skip" href="#main">跳到主要内容</a>
+    <div class="site-shell">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="kurumochi 首页"
+          ><span class="brand-copy"
+            ><strong>kurumochi<span class="brand-seed">.</span></strong></span
+          ></a
+        >
+        <nav class="desktop-nav" aria-label="主导航">
+          <a class="nav-link" href="/">首页</a
+          ><a class="nav-link" href="/blog/">文章</a
+          ><a
+            class="nav-link is-active"
+            aria-current="page"
+            href="/reviews.html"
+            >复盘</a
+          ><a class="nav-link" href="/portfolio.html">作品</a
+          ><a class="nav-link" href="/archive.html">归档</a
+          ><a class="nav-link" href="/about.html">关于</a>
+        </nav>
+        <div class="topbar-actions">
+          <button
+            class="icon-button menu-button"
+            id="menu-toggle"
+            type="button"
+            aria-label="打开导航菜单"
+            aria-controls="mobile-menu"
+            aria-expanded="false"
+          >
+            ☰
+          </button>
+        </div>
+      </header>
+      <nav
+        class="mobile-menu"
+        id="mobile-menu"
+        aria-label="移动导航"
+        aria-hidden="true"
+      >
+        <a class="nav-link" href="/">首页</a
+        ><a class="nav-link" href="/blog/">文章</a
+        ><a class="nav-link is-active" aria-current="page" href="/reviews.html"
+          >复盘</a
+        ><a class="nav-link" href="/portfolio.html">作品</a
+        ><a class="nav-link" href="/archive.html">归档</a
+        ><a class="nav-link" href="/about.html">关于</a>
+      </nav>
+      <main id="main">
+        <div class="page-width page-intro">
+          <p class="eyebrow">DAILY REVIEW</p>
+          <h1>每日复盘</h1>
+          <p>今日目标、完成情况、问题与收获、明日计划。</p>
+        </div>
+        <section class="page-width journal-panel" aria-label="复盘记录">
+          <div class="filter-toolbar">
+            <label
+              >搜索复盘<input
+                id="review-search"
+                type="search"
+                placeholder="搜索标题和正文"
+            /></label>
+            <label>按月查看<input id="review-month" type="month" /></label>
+          </div>
+          <p id="review-status" role="status">正在加载复盘…</p>
+          <button id="review-retry" type="button" hidden>重新加载</button>
+          <div id="review-list" aria-busy="true"></div>
+          <nav class="list-pagination" aria-label="复盘分页">
+            <button id="review-previous" type="button" disabled>上一页</button>
+            <span id="review-page">1 / 1</span>
+            <button id="review-next" type="button" disabled>下一页</button>
+          </nav>
+        </section>
+      </main>
+      <footer class="footer page-width site-footer">
+        <div>
+          <a class="footer-brand" href="/">kurumochi.</a>
+          <p class="footer-contact">
+            <a href="mailto:jiezi124168@gmail.com">邮箱 ↗</a>
+            <a
+              href="https://github.com/kurunomochi"
+              target="_blank"
+              rel="noreferrer"
+              >GitHub ↗</a
+            >
+          </p>
+          <small>© <span data-year></span> kurumochi</small>
+        </div>
+        <nav aria-label="页脚导航">
+          <a href="/blog/">全部文章</a><a href="/portfolio.html">Blender 作品</a
+          ><a href="/archive.html">文章归档</a><a href="/about.html">关于本站</a
+          ><a href="#top">回到顶部 ↑</a>
+        </nav>
+      </footer>
+    </div>
+    <p id="site-notice" class="site-notice" role="status" hidden></p>
+    <noscript
+      ><p class="noscript-note">
+        文章与作品需要启用 JavaScript
+        才能加载。你仍可通过导航浏览页面，或通过邮箱与我联系。
+      </p></noscript
+    >
+    <script src="/common.js?v=20261024-video"></script>
+    <script src="/journal.js?v=20261024-video"></script>
+    <script src="/reviews.js?v=20261111"></script>
+  </body>
+</html>

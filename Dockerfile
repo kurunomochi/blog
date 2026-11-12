@@ -2,6 +2,7 @@ FROM rust:1-bookworm AS build
 WORKDIR /app
 COPY Cargo.toml Cargo.lock ./
 COPY src ./src
+COPY scripts/export-model.py ./scripts/export-model.py
 RUN cargo build --locked --release
 
 FROM debian:bookworm-slim

@@ -213,13 +213,13 @@ h1 {
 .section-heading .eyebrow {
   margin-bottom: 14px;
 }
-.section-heading h2 {
+.section-heading :is(h1, h2) {
   font-family: var(--serif);
   font-size: 34px;
   font-weight: 400;
   margin: 0;
 }
-.section-heading h2 span {
+.section-heading :is(h1, h2) span {
   font: 11px monospace;
   color: var(--muted);
   vertical-align: top;
@@ -722,7 +722,7 @@ h1 {
   .section-heading > p {
     display: none;
   }
-  .section-heading h2 {
+  .section-heading :is(h1, h2) {
     font-size: 29px;
   }
   .collection-toolbar {

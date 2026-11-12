@@ -3,6 +3,8 @@
 !Cargo.lock
 !src
 !src/**
+!scripts
+!scripts/export-model.py
 !public
 !public/**
 !Dockerfile

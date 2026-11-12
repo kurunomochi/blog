@@ -12,6 +12,8 @@ pub enum AppError {
     NotFound,
     TooManyRequests,
     PayloadTooLarge,
+    Conflict(String),
+    Unavailable(String),
     Internal,
 }
 impl AppError {
@@ -26,6 +28,8 @@ impl IntoResponse for AppError {
             Self::BadRequest(message) => (StatusCode::BAD_REQUEST, message),
             Self::Unauthorized => (StatusCode::UNAUTHORIZED, "需要管理员登录".into()),
             Self::NotFound => (StatusCode::NOT_FOUND, "内容不存在".into()),
+            Self::Conflict(message) => (StatusCode::CONFLICT, message),
+            Self::Unavailable(message) => (StatusCode::SERVICE_UNAVAILABLE, message),
             Self::PayloadTooLarge => (
                 StatusCode::PAYLOAD_TOO_LARGE,
                 "图片最大 20 MB，MP4 视频最大 100 MB".into(),

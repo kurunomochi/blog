@@ -21,6 +21,15 @@ async function init() {
       .filter((url) => url !== w.cover)
       .map((url) => photo(url, true))
       .join("")}</section>`;
+    if (w.model) {
+      const section = document.createElement("section");
+      root.querySelector(".detail-top").after(section);
+      import("/model-viewer.js?v=20261025-3d")
+        .then(({ mountModelViewer }) => mountModelViewer(section, w.model))
+        .catch(() => {
+          section.textContent = "3D 查看器加载失败，请刷新重试。";
+        });
+    }
     root.querySelectorAll("[data-image]").forEach(
       (button) =>
         (button.onclick = () => {

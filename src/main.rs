@@ -1,6 +1,7 @@
 mod auth;
 mod config;
 mod error;
+mod models;
 mod posts;
 mod storage;
 mod works;
@@ -32,6 +33,7 @@ struct AppState {
     uploads_dir: PathBuf,
     admin_username: String,
     admin_password: String,
+    models: models::ModelService,
 }
 
 #[tokio::main]
@@ -57,10 +59,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         uploads_dir: uploads_dir.clone(),
         admin_username: config.username,
         admin_password: config.password,
+        models: models::ModelService::new(config.data_dir.join("model-jobs")),
     });
     let protected = Router::new()
         .merge(posts::protected_routes())
         .merge(works::protected_routes())
+        .merge(models::routes())
         .route("/auth/session", get(auth::session))
         .route("/auth/logout", post(auth::logout))
         .route_layer(middleware::from_fn_with_state(state.clone(), auth::guard));

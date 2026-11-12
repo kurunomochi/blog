@@ -6,6 +6,7 @@ let works = [],
   editing = null,
   images = [],
   cover = "",
+  model = "",
   uploading = false;
 const editor = $("#editor");
 function message(id, text) {
@@ -99,6 +100,8 @@ function edit(work) {
   editor.reset();
   images = work ? [...new Set([work.cover, ...work.images])] : [];
   cover = work?.cover || "";
+  model = work?.model || "";
+  renderModel();
   for (const name of ["title", "category", "date", "software", "description"])
     editor.elements[name].value =
       work?.[name] ||
@@ -177,6 +180,7 @@ $("#files").onchange = async (e) => {
   $("#new-work").disabled = true;
   $("#cancel").disabled = true;
   $("#files").disabled = true;
+  $("#model-file").disabled = true;
   $("#add-url").disabled = true;
   $("#logout").disabled = true;
   try {
@@ -199,6 +203,7 @@ $("#files").onchange = async (e) => {
     $("#new-work").disabled = false;
     $("#cancel").disabled = false;
     $("#files").disabled = false;
+    $("#model-file").disabled = false;
     $("#add-url").disabled = false;
     $("#logout").disabled = false;
     e.target.value = "";
@@ -216,6 +221,7 @@ editor.onsubmit = async (e) => {
   data.featured = editor.elements.featured.checked;
   data.cover = cover;
   data.images = images.filter((url) => url !== cover);
+  data.model = model;
   try {
     await api(
       editing ? "/api/works/" + encodeURIComponent(editing) : "/api/works",
@@ -239,3 +245,166 @@ if (client.hasToken())
     signedOut();
     message("#login-message", e.message);
   });
+
+async function renderModel() {
+  const root = $("#model-preview");
+  root
+    .querySelector(".model-viewer")
+    ?.dispatchEvent(new Event("model-dispose"));
+  root.replaceChildren();
+  $("#remove-model").hidden = !model;
+  message(
+    "#model-message",
+    model
+      ? "3D 模型已准备好，可在下方预览；保存作品后发布。"
+      : "可选：为作品增加能旋转和移动视角的 3D 预览。",
+  );
+  if (!model) return;
+  const current = model;
+  try {
+    const { mountModelViewer } = await import("/model-viewer.js?v=20261025-3d");
+    if (current !== model) return;
+    const section = document.createElement("section");
+    root.replaceChildren(section);
+    mountModelViewer(section, current);
+  } catch {
+    message("#model-message", "模型已保存，但预览组件加载失败。刷新后可重试。");
+  }
+}
+$("#remove-model").onclick = () => {
+  if (uploading) return;
+  model = "";
+  renderModel();
+};
+$("#model-file").onchange = async (event) => {
+  const file = event.target.files[0];
+  if (!file || uploading) return;
+  const format = file.name.toLowerCase().split(".").pop();
+  if (
+    !["blend", "glb"].includes(format) ||
+    !file.size ||
+    file.size > (format === "blend" ? 1024 : 50) * 1024 * 1024
+  ) {
+    message("#model-message", ".blend 最大 1 GiB（1024 MiB），GLB 最大 50 MiB");
+    event.target.value = "";
+    return;
+  }
+  uploading = true;
+  const controller = new AbortController();
+  const cancelUpload = $("#cancel-model-upload");
+  let sessionId = "";
+  let submitted = false;
+  const controls = [
+    ...$("#dashboard").querySelectorAll(
+      "button:not(#cancel-model-upload), input, textarea",
+    ),
+  ];
+  const previous = controls.map((element) => element.disabled);
+  controls.forEach((element) => (element.disabled = true));
+  cancelUpload.hidden = false;
+  cancelUpload.disabled = false;
+  cancelUpload.onclick = () => {
+    controller.abort();
+    cancelUpload.disabled = true;
+    message("#model-message", "正在取消上传…");
+  };
+  message("#model-message", `正在上传 ${file.name}，请勿关闭页面…`);
+  try {
+    const session = await api("/api/model-upload-sessions", {
+      method: "POST",
+      body: JSON.stringify({ format, size: file.size }),
+      headers: { "Content-Type": "application/json" },
+      signal: AbortSignal.any([controller.signal, AbortSignal.timeout(30000)]),
+    });
+    sessionId = session.id;
+    const retry = async (route, options) => {
+      for (let attempt = 0; ; attempt++) {
+        controller.signal.throwIfAborted();
+        try {
+          return await api(route, {
+            ...options,
+            signal: AbortSignal.any([
+              controller.signal,
+              AbortSignal.timeout(300000),
+            ]),
+          });
+        } catch (error) {
+          if (
+            controller.signal.aborted ||
+            attempt >= 2 ||
+            (error.status >= 400 && error.status < 500)
+          )
+            throw error;
+          message(
+            "#model-message",
+            `网络中断，正在重试当前分片（${attempt + 1}/2）…`,
+          );
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+      }
+    };
+    for (let offset = 0; offset < file.size; ) {
+      controller.signal.throwIfAborted();
+      const end = Math.min(offset + session.chunk_bytes, file.size);
+      const result = await retry(
+        `/api/model-upload-sessions/${encodeURIComponent(sessionId)}?offset=${offset}`,
+        {
+          method: "PUT",
+          body: file.slice(offset, end),
+          headers: { "Content-Type": "application/octet-stream" },
+        },
+      );
+      if (result.received !== end)
+        throw new Error("服务器上传进度不一致，请重新选择文件");
+      offset = end;
+      message(
+        "#model-message",
+        `上传 ${Math.floor((offset / file.size) * 100)}% · ${(offset / 1048576).toFixed(1)} / ${(file.size / 1048576).toFixed(1)} MiB，请勿关闭页面…`,
+      );
+    }
+    // Once complete is sent, the server may already be converting even if its response is lost.
+    cancelUpload.hidden = true;
+    let job = await retry(
+      `/api/model-upload-sessions/${encodeURIComponent(sessionId)}/complete`,
+      { method: "POST" },
+    );
+    submitted = true;
+    const deadline = Date.now() + 180000;
+    while (job.status === "processing") {
+      message("#model-message", job.message);
+      if (Date.now() > deadline)
+        throw new Error("等待转换超时，请稍后重新上传；原作品保持不变。");
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      job = await api("/api/model-jobs/" + encodeURIComponent(job.id));
+    }
+    if (job.status !== "ready" || !job.url)
+      throw new Error(job.message || "转换失败");
+    model = job.url;
+    if (!cover) {
+      cover = "/assets/model-placeholder.svg";
+      images.push(cover);
+      renderImages();
+    }
+    await renderModel();
+  } catch (error) {
+    message(
+      "#model-message",
+      controller.signal.aborted
+        ? "上传已取消，原作品保持不变。"
+        : error.status === 404
+          ? "转换任务不存在，服务器可能已重启，请重新上传。"
+          : error.message,
+    );
+  } finally {
+    if (sessionId && !submitted) {
+      await api(`/api/model-upload-sessions/${encodeURIComponent(sessionId)}`, {
+        method: "DELETE",
+        signal: AbortSignal.timeout(30000),
+      }).catch(() => {});
+    }
+    cancelUpload.hidden = true;
+    uploading = false;
+    controls.forEach((element, i) => (element.disabled = previous[i]));
+    event.target.value = "";
+  }
+};
