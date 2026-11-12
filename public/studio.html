@@ -6,8 +6,10 @@
     <meta name="robots" content="noindex" />
     <title>作品管理 · kurumochi</title>
     <link rel="stylesheet" href="/portfolio.css" />
-    <script src="/common.js?v=20261024-video"></script>
-    <script src="/studio.js?v=20261027-large-upload" defer></script>
+    <link rel="stylesheet" href="/admin-login.css?v=20261112-oauth" />
+    <script src="/common.js?v=20261112-oauth"></script>
+    <script src="/admin-login.js?v=20261112-oauth"></script>
+    <script src="/studio.js?v=20261112-oauth" defer></script>
     <link rel="stylesheet" href="/media.css?v=20261024-video" />
     <link rel="stylesheet" href="/model-viewer.css?v=20261025-3d" />
     <script type="importmap">
@@ -34,7 +36,9 @@
       <h1>作品工作室</h1>
       <section id="login-panel" class="panel login-panel">
         <h2>管理员登录</h2>
-        <form id="login-form">
+        <div id="oauth-login"></div>
+        <p id="oauth-note"></p>
+        <form id="login-form" hidden>
           <label
             >账号<input
               name="username"
@@ -47,8 +51,11 @@
               autocomplete="current-password"
               required /></label
           ><button class="btn" type="submit">登录工作室 ↗</button>
-          <p id="login-message" class="message" role="alert"></p>
         </form>
+        <p id="login-message" class="message" role="alert"></p>
+        <button type="button" id="login-retry" class="btn" hidden>
+          重新检查
+        </button>
       </section>
       <section id="dashboard" hidden>
         <div class="studio-toolbar">

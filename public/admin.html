@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>后台 · kurumochi / BLOG</title>
     <link rel="stylesheet" href="admin.css" />
+    <link rel="stylesheet" href="/admin-login.css?v=20261112-oauth" />
     <style>
       [hidden] {
         display: none !important;
@@ -31,7 +32,9 @@
 
       <section class="panel login-panel" id="login-panel">
         <h2>管理员登录</h2>
-        <form id="login-form">
+        <div id="oauth-login"></div>
+        <p id="oauth-note"></p>
+        <form id="login-form" hidden>
           <label
             >账号<input name="username" autocomplete="username" required
           /></label>
@@ -43,8 +46,9 @@
               required
           /></label>
           <button type="submit">登录</button>
-          <p class="message" id="login-message" role="alert"></p>
         </form>
+        <p class="message" id="login-message" role="alert"></p>
+        <button type="button" id="login-retry" hidden>重新检查</button>
       </section>
 
       <section class="dashboard" id="dashboard" hidden>
@@ -121,8 +125,9 @@
         </form>
       </section>
     </main>
-    <script src="/common.js?v=20261024-video"></script>
+    <script src="/common.js?v=20261112-oauth"></script>
+    <script src="/admin-login.js?v=20261112-oauth"></script>
     <script src="/review-data.js?v=20261112-calendar"></script>
-    <script src="/admin.js?v=20261112-calendar"></script>
+    <script src="/admin.js?v=20261112-oauth"></script>
   </body>
 </html>

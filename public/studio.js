@@ -240,11 +240,7 @@ editor.onsubmit = async (e) => {
     $("#save").disabled = false;
   }
 };
-if (client.hasToken())
-  dashboard().catch((e) => {
-    signedOut();
-    message("#login-message", e.message);
-  });
+AdminLogin.init(client, dashboard);
 
 async function renderModel() {
   const root = $("#model-preview");

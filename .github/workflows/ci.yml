@@ -26,4 +26,4 @@ jobs:
       - run: cargo test --locked --example tcp_frames
       - run: cargo build --locked
       - run: npm test
-      - run: node tests/api-smoke.mjs
+      - run: npm run test:api

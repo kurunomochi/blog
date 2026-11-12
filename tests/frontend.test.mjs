@@ -121,3 +121,22 @@ test("JSON and binary requests keep appropriate content types", async () => {
   assert.equal(seen[1].headers.get("Content-Type"), null);
   assert.equal(seen[1].headers.get("Authorization"), "Bearer valid");
 });
+
+test("cookie sessions obtain CSRF protection and send it with writes without exposing a bearer", async () => {
+  const seen = [];
+  const blog = setup(async (path, options) => {
+    seen.push({ path, options });
+    return path === "/api/auth/session"
+      ? new Response('{"csrf_token":"csrf-example"}')
+      : new Response(null, { status: 204 });
+  });
+  const client = blog.adminClient(() => {});
+  await client.request("/api/posts", { method: "POST", body: "{}" });
+  assert.equal(seen[0].path, "/api/auth/session");
+  assert.equal(seen[1].options.headers.get("X-CSRF-Token"), "csrf-example");
+  assert.equal(seen[1].options.headers.get("Authorization"), null);
+  assert.equal(seen[1].options.credentials, "same-origin");
+  await client.request("/api/auth/logout", { method: "POST" });
+  await client.request("/api/posts", { method: "POST", body: "{}" });
+  assert.equal(seen[3].path, "/api/auth/session");
+});

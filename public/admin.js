@@ -336,11 +336,7 @@ document.querySelector("#logout").addEventListener("click", async () => {
   setMessage(loginMessage, "");
 });
 
-if (client.hasToken())
-  showDashboard().catch((error) => {
-    signedOut();
-    setMessage(loginMessage, error.message);
-  });
+AdminLogin.init(client, showDashboard);
 
 document
   .querySelector("#post-video")

@@ -1,0 +1,48 @@
+[hidden] {
+  display: none !important;
+}
+#oauth-login {
+  display: grid;
+  gap: 12px;
+  margin: 20px 0;
+}
+.oauth-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 48px;
+  padding: 12px 20px;
+  border: 1px solid #c6d0c4;
+  border-radius: 10px;
+  text-decoration: none;
+  font: inherit;
+  font-weight: 600;
+  transition: background 0.15s;
+}
+.oauth-github {
+  color: white;
+  background: #24292f;
+  border-color: #24292f;
+}
+.oauth-github:hover {
+  background: #3b424b;
+}
+.oauth-google {
+  color: #26382c;
+  background: #fff;
+}
+.oauth-google:hover {
+  background: #f0f4ee;
+}
+.oauth-button:focus-visible {
+  outline: 3px solid #65834d;
+  outline-offset: 3px;
+}
+#oauth-note {
+  color: #566456;
+  font-size: 14px;
+  line-height: 1.7;
+}
+#login-message {
+  overflow-wrap: anywhere;
+}

@@ -23,6 +23,12 @@
 
 后台入口不显示在公共导航中；管理员直接访问 `/admin.html` 或 `/studio.html`。
 
+### 管理员授权登录
+
+支持 GitHub 与 Google 授权登录，文章、复盘和作品后台共用会话。GitHub 按固定数字用户 ID 校验，Google 按已验证邮箱（可额外固定 `sub`）校验，其他账号即使授权也不能管理网站。
+
+创建授权应用后，在本站服务器运行 `python3 scripts/configure-auth.py --restart`，交互输入两家的 Client ID / Secret，配置写入私有 `data/auth-providers.json`；完成后关闭密码登录。未配置时保留原密码入口。完整创建步骤、回调地址、通用配置与恢复方法见 **[后台授权登录说明](docs/admin-oauth.md)**。不要把客户端密钥写到 HTML、JavaScript 或 Git。
+
 ### 上传 Blender 模型并交互查看
 
 进入 `/studio.html`，新建或编辑作品，在「3D 模型」区域上传 `.blend`（最大 **1 GiB / 1024 MiB**）或 `.glb`（最大 **50 MiB**）。后台按 8 MiB 分片上传，显示进度，失败分片最多重试两次，可取消上传；每个分片直接写入磁盘，不会把整个工程读入后端内存。等提示模型准备完成后保存作品，访客即可在作品详情点击「加载 3D 模型」。无封面时会使用模型占位图，也可以另传渲染图作为封面。

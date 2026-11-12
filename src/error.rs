@@ -9,6 +9,7 @@ use serde_json::json;
 pub enum AppError {
     BadRequest(String),
     Unauthorized,
+    Forbidden,
     NotFound,
     TooManyRequests,
     PayloadTooLarge,
@@ -27,6 +28,10 @@ impl IntoResponse for AppError {
         let (status, message) = match self {
             Self::BadRequest(message) => (StatusCode::BAD_REQUEST, message),
             Self::Unauthorized => (StatusCode::UNAUTHORIZED, "需要管理员登录".into()),
+            Self::Forbidden => (
+                StatusCode::FORBIDDEN,
+                "请求校验失败，请刷新后台后重试".into(),
+            ),
             Self::NotFound => (StatusCode::NOT_FOUND, "内容不存在".into()),
             Self::Conflict(message) => (StatusCode::CONFLICT, message),
             Self::Unavailable(message) => (StatusCode::SERVICE_UNAVAILABLE, message),

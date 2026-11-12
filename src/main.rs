@@ -2,6 +2,7 @@ mod auth;
 mod config;
 mod error;
 mod models;
+mod oauth;
 mod posts;
 mod storage;
 mod works;
@@ -26,7 +27,7 @@ type SharedState = Arc<AppState>;
 struct AppState {
     posts: RwLock<Vec<posts::Post>>,
     works: RwLock<Vec<works::Work>>,
-    sessions: RwLock<Vec<(String, Instant)>>,
+    sessions: RwLock<Vec<auth::Session>>,
     login_attempts: Mutex<Vec<Instant>>,
     data_file: PathBuf,
     works_file: PathBuf,
@@ -34,6 +35,7 @@ struct AppState {
     admin_username: String,
     admin_password: String,
     models: models::ModelService,
+    oauth: oauth::OAuth,
 }
 
 #[tokio::main]
@@ -60,6 +62,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         admin_username: config.username,
         admin_password: config.password,
         models: models::ModelService::new(config.data_dir.join("model-jobs")),
+        oauth: config.oauth,
     });
     let protected = Router::new()
         .merge(posts::protected_routes())
@@ -74,6 +77,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             get(|| async { Json(serde_json::json!({ "status": "ok" })) }),
         )
         .route("/auth/login", post(auth::login))
+        .merge(oauth::routes())
         .merge(posts::public_routes())
         .merge(works::public_routes())
         .merge(protected)
@@ -94,13 +98,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 async fn security_headers(request: Request, next: Next) -> Response {
     let api = request.uri().path().starts_with("/api/");
+    let auth = request.uri().path().starts_with("/api/auth/");
     let mut response = next.run(request).await;
     let headers = response.headers_mut();
     headers.insert(header::X_CONTENT_TYPE_OPTIONS, "nosniff".parse().unwrap());
     headers.insert(header::X_FRAME_OPTIONS, "DENY".parse().unwrap());
     headers.insert(
         header::REFERRER_POLICY,
-        "strict-origin-when-cross-origin".parse().unwrap(),
+        if auth {
+            "no-referrer"
+        } else {
+            "strict-origin-when-cross-origin"
+        }
+        .parse()
+        .unwrap(),
     );
     headers.insert(
         header::CACHE_CONTROL,

@@ -98,21 +98,52 @@
     return body;
   }
   function adminClient(onSignedOut) {
+    let csrf = "";
+    const readToken = () => {
+      try {
+        return sessionStorage.getItem(TOKEN_KEY);
+      } catch {
+        return null;
+      }
+    };
+    const clearToken = () => {
+      csrf = "";
+      try {
+        sessionStorage.removeItem(TOKEN_KEY);
+      } catch {
+        /* OAuth uses HttpOnly cookies. */
+      }
+    };
     return {
-      hasToken: () => Boolean(sessionStorage.getItem(TOKEN_KEY)),
+      hasToken: () => Boolean(readToken()),
       setToken: (token) => sessionStorage.setItem(TOKEN_KEY, token),
-      clearToken: () => sessionStorage.removeItem(TOKEN_KEY),
+      clearToken,
       async request(path, options = {}) {
         const headers = new Headers(options.headers);
-        const token = sessionStorage.getItem(TOKEN_KEY);
+        const token = readToken();
         if (token) headers.set("Authorization", "Bearer " + token);
         if (typeof options.body === "string" && !headers.has("Content-Type"))
           headers.set("Content-Type", "application/json");
         try {
-          return await request(path, { ...options, headers });
+          const writes = !["GET", "HEAD", "OPTIONS"].includes(
+            (options.method || "GET").toUpperCase(),
+          );
+          if (!token && writes && path !== "/api/auth/login") {
+            if (!csrf)
+              csrf = (await request("/api/auth/session"))?.csrf_token || "";
+            if (csrf) headers.set("X-CSRF-Token", csrf);
+          }
+          const result = await request(path, {
+            ...options,
+            headers,
+            credentials: "same-origin",
+          });
+          if (path === "/api/auth/session") csrf = result?.csrf_token || "";
+          if (path === "/api/auth/logout") clearToken();
+          return result;
         } catch (error) {
           if (error.status === 401) {
-            sessionStorage.removeItem(TOKEN_KEY);
+            clearToken();
             onSignedOut();
           }
           throw error;
