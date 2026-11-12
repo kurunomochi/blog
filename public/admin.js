@@ -338,37 +338,77 @@ document.querySelector("#logout").addEventListener("click", async () => {
 
 AdminLogin.init(client, showDashboard);
 
-document
-  .querySelector("#post-video")
-  .addEventListener("change", async (event) => {
-    const file = event.target.files[0];
-    if (!file || uploading || saving) return;
-    const output = document.querySelector("#video-message");
-    if (!/\.mp4$/i.test(file.name)) {
-      setMessage(output, "请选择 MP4 视频");
-      event.target.value = "";
-      return;
-    }
-    const content = postForm.elements.content;
-    const start = content.selectionStart,
-      end = content.selectionEnd;
-    const controls = [...dashboard.querySelectorAll("button, input, textarea")];
-    const previous = controls.map((control) => control.disabled);
-    uploading = true;
-    controls.forEach((control) => (control.disabled = true));
-    setMessage(output, `正在上传 ${file.name}，请勿关闭页面…`);
-    try {
-      const result = await Blog.uploadMedia(client, file);
-      content.setRangeText(`\n[video](${result.url})\n`, start, end, "end");
+async function insertUploads(event, kind) {
+  const files = [...event.target.files];
+  if (!files.length || uploading || saving) return;
+  const images = kind === "image";
+  const label = images ? "图片" : "视频";
+  const output = document.querySelector(
+    images ? "#image-message" : "#video-message",
+  );
+  const allowed = images ? /\.(png|jpe?g|webp)$/i : /\.mp4$/i;
+  const limit = (images ? 20 : 100) * 1024 * 1024;
+  const invalid = files.find(
+    (file) => !allowed.test(file.name) || !file.size || file.size > limit,
+  );
+  if (invalid) {
+    setMessage(
+      output,
+      `${invalid.name}：${images ? "请选择 PNG、JPG、WebP，每张不超过 20 MB" : "请选择 MP4，最大 100 MB"}，文件不能为空。`,
+    );
+    event.target.value = "";
+    return;
+  }
+  const content = postForm.elements.content;
+  let start = content.selectionStart,
+    end = content.selectionEnd;
+  const controls = [...dashboard.querySelectorAll("button, input, textarea")];
+  const previous = controls.map((control) => control.disabled);
+  uploading = true;
+  controls.forEach((control) => (control.disabled = true));
+  let inserted = 0;
+  try {
+    for (const file of files) {
       setMessage(
         output,
-        "视频已插入正文，保存文章后发布。可以移动这一行调整视频位置。",
+        `正在上传 ${inserted + 1}/${files.length}：${file.name}，请勿关闭页面…`,
       );
-    } catch (error) {
-      setMessage(output, error.message);
-    } finally {
-      uploading = false;
-      controls.forEach((control, i) => (control.disabled = previous[i]));
-      event.target.value = "";
+      const result = await Blog.uploadMedia(client, file);
+      if (
+        !Blog.imageUrl(result.url) ||
+        (images ? Blog.isVideo(result.url) : !Blog.isVideo(result.url))
+      )
+        throw new Error("文件内容与所选媒体类型不符，请检查文件格式。");
+      const caption =
+        file.name
+          .replace(/\.[^.]+$/, "")
+          .replace(/[\[\]\\\r\n]/g, " ")
+          .trim() || "图片";
+      const block = images
+        ? `![${caption}](${result.url})`
+        : `[video](${result.url})`;
+      content.setRangeText(`\n${block}\n`, start, end, "end");
+      start = end = content.selectionEnd;
+      inserted++;
     }
-  });
+    setMessage(
+      output,
+      `${inserted} 个${label}已插入正文，保存发布后显示。可以移动对应行调整位置。`,
+    );
+  } catch (error) {
+    setMessage(
+      output,
+      `${error.message}${inserted ? ` 已插入 ${inserted} 个${label}，仍需保存发布；其余文件可重新选择上传。` : ""}`,
+    );
+  } finally {
+    uploading = false;
+    controls.forEach((control, i) => (control.disabled = previous[i]));
+    event.target.value = "";
+  }
+}
+document
+  .querySelector("#post-video")
+  .addEventListener("change", (event) => insertUploads(event, "video"));
+document
+  .querySelector("#post-images")
+  .addEventListener("change", (event) => insertUploads(event, "image"));

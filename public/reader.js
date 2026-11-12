@@ -49,6 +49,33 @@
         continue;
       }
       list = null;
+      if (block.type === "image") {
+        const figure = document.createElement("figure");
+        figure.className = "article-image";
+        const link = document.createElement("a");
+        link.href = block.text;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.setAttribute("aria-label", `查看原图：${block.alt || "正文图片"}`);
+        const image = document.createElement("img");
+        image.src = block.text;
+        image.alt = block.alt || "正文图片";
+        image.loading = "lazy";
+        image.decoding = "async";
+        image.referrerPolicy = "no-referrer";
+        link.append(image);
+        figure.append(link);
+        const caption = document.createElement("figcaption");
+        caption.textContent = block.alt;
+        caption.hidden = !block.alt;
+        figure.append(caption);
+        image.addEventListener("error", () => {
+          caption.hidden = false;
+          caption.textContent = `${block.alt ? block.alt + " · " : ""}图片暂时无法加载，可点击查看原图。`;
+        });
+        body.append(figure);
+        continue;
+      }
       if (block.type === "video") {
         const wrap = document.createElement("div");
         wrap.innerHTML = Blog.videoPlayer(block.text, article.title);

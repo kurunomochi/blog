@@ -71,3 +71,27 @@
 .article-body .video-figure {
   margin-block: 24px;
 }
+.article-body .article-image {
+  margin: 24px 0;
+  min-width: 0;
+}
+.article-image img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  max-height: 85vh;
+  object-fit: contain;
+  border-radius: 8px;
+  margin-inline: auto;
+}
+.article-image figcaption {
+  margin-top: 10px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--muted, #52604f);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.article-image a {
+  display: block;
+}

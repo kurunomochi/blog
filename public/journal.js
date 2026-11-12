@@ -114,6 +114,11 @@
         continue;
       }
       if (!line.trim()) continue;
+      const image = line.trim().match(/^!\[([^\]\r\n]*)\]\(([^\s]+)\)$/);
+      if (image && Blog.imageUrl(image[2]) && !Blog.isVideo(image[2])) {
+        result.push({ type: "image", text: image[2], alt: image[1] });
+        continue;
+      }
       const video = line.trim().match(/^\[video\]\(([^\s]+)\)$/);
       if (video && Blog.isVideo(video[1])) {
         result.push({ type: "video", text: video[1] });

@@ -114,6 +114,18 @@
             ></textarea>
           </label>
           <label
+            >插入图片<input
+              id="post-images"
+              type="file"
+              accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp"
+              multiple
+          /></label>
+          <p>
+            支持 PNG、JPG、WebP，每张最大 20
+            MB，可一次选择多张。图片插入正文光标处，保存发布后显示；可修改图片说明或移动对应行调整位置。
+          </p>
+          <p class="message" id="image-message" role="status"></p>
+          <label
             >插入视频<input id="post-video" type="file" accept="video/mp4,.mp4"
           /></label>
           <p>
@@ -128,6 +140,6 @@
     <script src="/common.js?v=20261112-oauth"></script>
     <script src="/admin-login.js?v=20261112-oauth"></script>
     <script src="/review-data.js?v=20261112-calendar"></script>
-    <script src="/admin.js?v=20261112-oauth"></script>
+    <script src="/admin.js?v=20261112-images"></script>
   </body>
 </html>

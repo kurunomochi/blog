@@ -6,16 +6,30 @@
   const { esc, ordered, card } = Journal;
   async function posts() {
     const el = document.querySelector("#recent-posts");
+    const reviews = document.querySelector("#recent-reviews");
     try {
-      const items = ordered(await Blog.request("/api/posts"));
+      const all = ordered(await Blog.request("/api/posts"));
+      const isReview = (post) =>
+        ["每日复盘", "每周总结"].includes(post.category);
+      const items = all.filter((post) => !isReview(post));
+      const reviewItems = all.filter(isReview);
       document.querySelector("#post-count").textContent =
         `${items.length} 篇文章`;
+      document.querySelector("#review-count").textContent =
+        `${reviewItems.length} 篇复盘与周总结`;
       el.innerHTML = items.length
         ? items.slice(0, 3).map(card).join("")
         : '<p class="empty-state">第一篇记录还在路上。</p>';
+      reviews.innerHTML = reviewItems.length
+        ? reviewItems.slice(0, 3).map(card).join("")
+        : '<p class="empty-state">还没有发布复盘，记录会从这里开始。</p>';
     } catch {
       el.innerHTML =
         '<p>文章暂时加载失败。<a class="text-link" href="/blog/">前往文章页重试 →</a></p>';
+      reviews.innerHTML =
+        '<p>复盘暂时加载失败。<a class="text-link" href="/reviews.html">前往复盘页重试 →</a></p>';
+      document.querySelector("#post-count").textContent = "文章暂时不可用";
+      document.querySelector("#review-count").textContent = "复盘暂时不可用";
     }
   }
   async function works() {

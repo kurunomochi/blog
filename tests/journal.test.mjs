@@ -5,6 +5,31 @@ import vm from "node:vm";
 
 const common = await readFile("public/common.js", "utf8");
 const source = await readFile("public/journal.js", "utf8");
+
+test("body images preserve captions, reject unsafe URLs and remain code inside fences", () => {
+  const j = setup();
+  const picture = j.blocks(["![截图 <b>不是HTML</b>](/uploads/shot.png)"])[0];
+  assert.equal(picture.type, "image");
+  assert.equal(picture.text, "/uploads/shot.png");
+  assert.equal(picture.alt, "截图 <b>不是HTML</b>");
+  for (const url of [
+    "javascript:alert(1)",
+    "data:image/svg+xml,bad",
+    "//evil.example/a.png",
+    "/uploads/../secret.png",
+    '/uploads/a.png"onerror="bad',
+    "/uploads/a.mp4",
+  ])
+    assert.notEqual(j.blocks([`![图片](${url})`])[0].type, "image");
+  assert.equal(
+    j.blocks(["```", "![图片](/uploads/a.png)", "```"])[0].type,
+    "code",
+  );
+  assert.equal(
+    j.blocks(["![](https://example.com/photo.webp)"])[0].type,
+    "image",
+  );
+});
 test("video blocks accept safe MP4 URLs, preserve unsafe text and code examples", () => {
   const j = setup();
   assert.equal(j.blocks(["[video](/uploads/a.mp4)"])[0].type, "video");
