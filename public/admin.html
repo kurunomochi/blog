@@ -22,6 +22,7 @@
         <div>
           <a href="/studio.html">作品管理</a> ·
           <a href="/admin.html?module=reviews">每日复盘管理</a> ·
+          <a href="/admin.html?module=weekly">周总结管理</a> ·
           <a href="/admin.html">文章管理</a> ·
           <a href="/reviews.html">查看复盘</a> ·
           <a href="index.html">返回博客</a>
@@ -55,6 +56,18 @@
           </div>
         </div>
         <p class="message" id="dashboard-message" role="status"></p>
+        <div class="panel" id="weekly-tools" hidden>
+          <label
+            >选择一周内任意日期<input id="weekly-date" type="date"
+          /></label>
+          <p id="weekly-range"></p>
+          <button id="weekly-generate" type="button">
+            生成或编辑这一周的总结
+          </button>
+          <p>
+            提取本周复盘的完成情况与问题；请补充下周计划，检查后再保存发布。已有总结会直接打开。
+          </p>
+        </div>
         <div class="post-list" id="post-list"></div>
 
         <form class="panel editor" id="post-form" hidden>
@@ -63,6 +76,14 @@
             <button class="secondary" id="cancel-edit" type="button">
               取消
             </button>
+          </div>
+          <div id="weekly-editor-tools" hidden>
+            <button class="secondary" id="weekly-refresh" type="button">
+              重新提取本周复盘
+            </button>
+            <p>
+              重新提取会替换当前正文。日期会自动归到该周周一，保存后对访客公开。
+            </p>
           </div>
           <div class="form-grid">
             <label>标题<input name="title" required /></label>
@@ -101,6 +122,7 @@
       </section>
     </main>
     <script src="/common.js?v=20261024-video"></script>
-    <script src="/admin.js?v=20261111-reviews"></script>
+    <script src="/review-data.js?v=20261112-calendar"></script>
+    <script src="/admin.js?v=20261112-calendar"></script>
   </body>
 </html>

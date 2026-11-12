@@ -1,0 +1,224 @@
+[hidden] {
+  display: none !important;
+}
+.review-layout {
+  display: grid;
+  grid-template-columns: minmax(270px, 0.85fr) minmax(0, 1.6fr);
+  gap: 24px;
+  align-items: start;
+}
+.review-layout .journal-panel {
+  padding: 26px;
+  min-width: 0;
+}
+.review-calendar {
+  position: sticky;
+  top: 24px;
+}
+.review-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+.review-heading h2,
+.review-heading p {
+  margin: 0;
+}
+.review-heading h2 {
+  font-size: 23px;
+}
+.review-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.review-button,
+.calendar-day {
+  font: inherit;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  background: #ffffff60;
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 9px 12px;
+}
+.review-button:hover,
+.calendar-day:hover {
+  background: #ffffffb0;
+}
+.review-button:focus-visible,
+.calendar-day:focus-visible,
+.reviews-page input:focus-visible {
+  outline: 2px solid #486a48;
+  outline-offset: 3px;
+}
+.review-button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.calendar-weekdays,
+.calendar-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 5px;
+}
+.calendar-weekdays span {
+  text-align: center;
+  font-size: 12px;
+  padding: 12px 0;
+  color: var(--muted);
+}
+.calendar-day {
+  min-height: 45px;
+  padding: 5px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  font-size: 14px;
+}
+.calendar-day.is-outside {
+  opacity: 0.48;
+}
+.calendar-day.is-today {
+  border-color: #486a48;
+}
+.calendar-day.is-selected {
+  background: #36563e;
+  color: white;
+  border-color: #36563e;
+  opacity: 1;
+}
+.calendar-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.calendar-caption,
+.review-note {
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--muted);
+}
+.review-stats {
+  display: flex;
+  gap: 22px;
+  padding: 16px 0;
+  margin-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.review-stats strong {
+  font-size: 24px;
+  display: block;
+  color: var(--ink);
+  font-weight: 500;
+}
+.review-stats span {
+  font-size: 12px;
+}
+.review-week {
+  margin-top: 8px;
+}
+.review-week .eyebrow {
+  margin: 0 0 6px;
+}
+.weekly-columns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+  margin-top: 24px;
+}
+.weekly-column {
+  min-width: 0;
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+}
+.weekly-column h3 {
+  font-size: 18px;
+  margin: 0 0 16px;
+}
+.weekly-column ul {
+  padding-left: 20px;
+}
+.weekly-column li {
+  margin: 8px 0;
+  line-height: 1.8;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.weekly-source {
+  font-size: 12px;
+  color: #426447;
+}
+.weekly-source-group + .weekly-source-group {
+  margin-top: 18px;
+}
+.weekly-source-group ul {
+  margin: 8px 0;
+}
+.weekly-empty {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.8;
+}
+.week-published {
+  padding: 10px 0;
+  line-height: 1.8;
+  font-size: 14px;
+}
+.review-records .filter-toolbar {
+  align-items: end;
+}
+.review-records .filter-toolbar label {
+  display: grid;
+  gap: 8px;
+  flex: 1;
+}
+.reviews-page input {
+  min-width: 0;
+  min-height: 42px;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff90;
+  color: var(--ink);
+  font: inherit;
+  box-sizing: border-box;
+}
+.review-records input {
+  width: 100%;
+}
+.review-records #review-status {
+  font-size: 13px;
+  margin: 18px 0;
+}
+.review-records .list-pagination {
+  flex-wrap: wrap;
+}
+@media (max-width: 850px) {
+  .review-layout {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .review-calendar {
+    position: static;
+  }
+  .weekly-columns {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .review-calendar .calendar-day {
+    min-height: 46px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reviews-page * {
+    scroll-behavior: auto !important;
+  }
+}

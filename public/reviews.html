@@ -13,45 +13,13 @@
     <link rel="stylesheet" href="/season-theme.css?v=20261020-about-v2" />
     <link rel="stylesheet" href="/journal.css?v=20261103" />
     <script src="/season-theme.js?v=20261021" defer></script>
-    <style>
-      .filter-toolbar {
-        align-items: end;
-      }
-      .filter-toolbar label {
-        display: grid;
-        gap: 8px;
-      }
-      .filter-toolbar label:first-child {
-        flex: 1;
-      }
-      .filter-toolbar input {
-        width: 100%;
-        min-height: 44px;
-        padding: 10px 14px;
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        background: rgba(255, 255, 255, 0.65);
-        color: var(--ink);
-        font: inherit;
-        box-sizing: border-box;
-      }
-      .filter-toolbar input:focus-visible {
-        outline: 2px solid #486a48;
-        outline-offset: 2px;
-      }
-      .list-pagination button:disabled {
-        opacity: 0.45;
-        cursor: default;
-      }
-      @media (max-width: 640px) {
-        .filter-toolbar {
-          display: grid;
-          grid-template-columns: 1fr;
-        }
-      }
-    </style>
+    <link rel="stylesheet" href="/reviews.css?v=20261112-calendar" />
   </head>
-  <body class="blog-theme journal-site" data-page="reviews" id="top">
+  <body
+    class="blog-theme journal-site reviews-page"
+    data-page="reviews"
+    id="top"
+  >
     <div class="season-background" aria-hidden="true">
       <video
         autoplay
@@ -124,27 +92,152 @@
         <div class="page-width page-intro">
           <p class="eyebrow">DAILY REVIEW</p>
           <h1>每日复盘</h1>
-          <p>今日目标、完成情况、问题与收获、明日计划。</p>
+          <p>
+            按天记录，按周整理。让完成的事、遇到的问题和下一步计划都有迹可循。
+          </p>
         </div>
-        <section class="page-width journal-panel" aria-label="复盘记录">
-          <div class="filter-toolbar">
-            <label
-              >搜索复盘<input
-                id="review-search"
-                type="search"
-                placeholder="搜索标题和正文"
-            /></label>
-            <label>按月查看<input id="review-month" type="month" /></label>
+        <div class="page-width" role="status" id="review-loading">
+          正在加载复盘日历…
+        </div>
+        <div class="page-width">
+          <button id="review-retry" class="review-button" type="button" hidden>
+            重新加载
+          </button>
+        </div>
+        <div id="review-content" hidden>
+          <div class="page-width review-layout">
+            <section
+              class="journal-panel review-calendar"
+              aria-label="复盘日历"
+            >
+              <div class="review-heading">
+                <h2>复盘日历</h2>
+                <button class="review-button" id="calendar-today" type="button">
+                  今天
+                </button>
+              </div>
+              <div class="review-actions">
+                <button
+                  class="review-button"
+                  id="month-previous"
+                  aria-label="上个月"
+                  type="button"
+                >
+                  ←
+                </button>
+                <input id="review-month" type="month" aria-label="日历月份" />
+                <button
+                  class="review-button"
+                  id="month-next"
+                  aria-label="下个月"
+                  type="button"
+                >
+                  →
+                </button>
+              </div>
+              <div class="calendar-weekdays" aria-hidden="true">
+                <span>一</span><span>二</span><span>三</span><span>四</span
+                ><span>五</span><span>六</span><span>日</span>
+              </div>
+              <div
+                class="calendar-days"
+                id="calendar-days"
+                aria-label="选择日期"
+              ></div>
+              <p class="calendar-caption">
+                圆点表示当天有复盘，点击日期查看记录。
+              </p>
+              <div class="review-stats">
+                <div>
+                  <strong id="calendar-count">0</strong
+                  ><span>本月记录天数</span>
+                </div>
+                <div>
+                  <strong id="calendar-total">0</strong
+                  ><span>本月复盘篇数</span>
+                </div>
+              </div>
+            </section>
+            <section class="journal-panel review-records" aria-label="复盘记录">
+              <div class="review-heading">
+                <h2 id="review-date-label">复盘记录</h2>
+                <button
+                  id="clear-date"
+                  type="button"
+                  class="review-button"
+                  hidden
+                >
+                  查看整月
+                </button>
+              </div>
+              <div class="filter-toolbar">
+                <label
+                  >搜索复盘<input
+                    id="review-search"
+                    type="search"
+                    placeholder="搜索当前日期或月份的标题和正文"
+                /></label>
+              </div>
+              <p id="review-status" role="status"></p>
+              <div id="review-list"></div>
+              <nav class="list-pagination" aria-label="复盘分页">
+                <button
+                  class="review-button"
+                  id="review-previous"
+                  type="button"
+                  disabled
+                >
+                  上一页</button
+                ><span id="review-page">1 / 1</span
+                ><button
+                  class="review-button"
+                  id="review-next"
+                  type="button"
+                  disabled
+                >
+                  下一页
+                </button>
+              </nav>
+            </section>
           </div>
-          <p id="review-status" role="status">正在加载复盘…</p>
-          <button id="review-retry" type="button" hidden>重新加载</button>
-          <div id="review-list" aria-busy="true"></div>
-          <nav class="list-pagination" aria-label="复盘分页">
-            <button id="review-previous" type="button" disabled>上一页</button>
-            <span id="review-page">1 / 1</span>
-            <button id="review-next" type="button" disabled>下一页</button>
-          </nav>
-        </section>
+          <section
+            class="page-width journal-panel review-week"
+            aria-label="周总结"
+            id="weekly-summary"
+          >
+            <div class="review-heading">
+              <div>
+                <p class="eyebrow">WEEKLY REFLECTION</p>
+                <h2 id="week-kind">本周记录汇总</h2>
+              </div>
+              <div class="review-actions">
+                <button id="week-previous" class="review-button" type="button">
+                  上一周</button
+                ><button id="week-current" class="review-button" type="button">
+                  本周</button
+                ><button id="week-next" class="review-button" type="button">
+                  下一周
+                </button>
+              </div>
+            </div>
+            <p id="week-label" aria-live="polite"></p>
+            <p class="review-note" id="week-count"></p>
+            <p class="review-note" id="week-note"></p>
+            <div class="week-published" id="week-published"></div>
+            <div class="weekly-columns">
+              <div class="weekly-column" id="week-done"></div>
+              <div class="weekly-column" id="week-problems"></div>
+              <div class="weekly-column" id="week-plans"></div>
+            </div>
+            <details>
+              <summary>本周的明日计划 · 整理参考</summary>
+              <p class="review-note">
+                这些是当时写下的计划，不代表已经完成，也不会自动转为下周安排。
+              </p>
+              <div id="week-plan-notes"></div>
+            </details>
+          </section>
+        </div>
       </main>
       <footer class="footer page-width site-footer">
         <div>
@@ -176,6 +269,7 @@
     >
     <script src="/common.js?v=20261024-video"></script>
     <script src="/journal.js?v=20261024-video"></script>
-    <script src="/reviews.js?v=20261111"></script>
+    <script src="/review-data.js?v=20261112-calendar"></script>
+    <script src="/reviews.js?v=20261112-calendar"></script>
   </body>
 </html>

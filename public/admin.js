@@ -12,20 +12,41 @@ let editingId = null;
 let posts = [];
 let uploading = false;
 let saving = false;
-const reviewMode =
-  new URLSearchParams(location.search).get("module") === "reviews";
-const itemName = reviewMode ? "复盘" : "文章";
+let allPosts = [];
+const moduleName = new URLSearchParams(location.search).get("module");
+const weeklyMode = moduleName === "weekly";
+const reviewMode = moduleName === "reviews" || weeklyMode;
+const reviewCategory = weeklyMode ? "每周总结" : "每日复盘";
+const itemName = weeklyMode ? "周总结" : reviewMode ? "复盘" : "文章";
 if (reviewMode) {
-  document.title = "每日复盘管理 · kurumochi";
-  document.querySelector(".admin-header h1").textContent = "每日复盘管理";
-  document.querySelector(".dashboard-toolbar h2").textContent = "复盘列表";
-  document.querySelector("#new-post").textContent = "写今日复盘";
+  document.title = `${reviewCategory}管理 · kurumochi`;
+  document.querySelector(".admin-header h1").textContent =
+    `${reviewCategory}管理`;
+  document.querySelector(".dashboard-toolbar h2").textContent =
+    `${itemName}列表`;
+  document.querySelector("#new-post").textContent = weeklyMode
+    ? "写本周总结"
+    : "写今日复盘";
   postForm.querySelector('button[type="submit"]').textContent =
-    "保存并发布复盘";
+    `保存并发布${itemName}`;
   postForm.elements.date.type = "date";
   postForm.elements.category.closest("label").hidden = true;
   postForm.elements.image.closest("label").hidden = true;
   postForm.elements.image.required = false;
+}
+if (weeklyMode) {
+  document.querySelector("#weekly-tools").hidden = false;
+  document.querySelector("#weekly-editor-tools").hidden = false;
+  document.querySelector("#weekly-date").value = ReviewData.today();
+  showWeekRange();
+}
+function showWeekRange() {
+  const start = ReviewData.weekStart(
+    document.querySelector("#weekly-date").value,
+  );
+  document.querySelector("#weekly-range").textContent = start
+    ? `${start} — ${ReviewData.shift(start, 6)}（周一至周日）`
+    : "请选择有效日期";
 }
 
 function setMessage(element, message) {
@@ -73,9 +94,10 @@ const escapeHtml = Blog.escapeHtml;
 async function loadPosts() {
   try {
     const all = await request("/api/posts");
+    allPosts = all;
     posts = reviewMode
       ? all
-          .filter((post) => post.category === "每日复盘")
+          .filter((post) => post.category === reviewCategory)
           .sort((a, b) =>
             b.date
               .replaceAll(".", "-")
@@ -93,11 +115,13 @@ function startEdit(id) {
   const post = posts.find((item) => item.id === id);
   if (!post) return;
   editingId = id;
-  postForm.elements.image.required = post.category !== "每日复盘";
+  postForm.elements.image.required = !["每日复盘", "每周总结"].includes(
+    post.category,
+  );
   editorTitle.textContent = `编辑${itemName}`;
   for (const [name, value] of Object.entries({
     ...post,
-    date: reviewMode ? post.date.replaceAll(".", "-") : post.date,
+    date: reviewMode ? ReviewData.dateKey(post.date) : post.date,
     content: post.content.join("\n"),
   })) {
     if (postForm.elements[name]) postForm.elements[name].value = value;
@@ -108,18 +132,19 @@ function startEdit(id) {
 
 function startCreate() {
   if (uploading || saving) return;
+  if (weeklyMode) {
+    document.querySelector("#weekly-date").value = ReviewData.today();
+    showWeekRange();
+    openWeekly();
+    return;
+  }
   editingId = null;
   editorTitle.textContent = `新建${itemName}`;
   postForm.reset();
   postForm.elements.image.required = !reviewMode;
   postForm.elements.image.value = "assets/cover-featured.svg";
   if (reviewMode) {
-    const date = new Intl.DateTimeFormat("en-CA", {
-      timeZone: "Asia/Shanghai",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    }).format(new Date());
+    const date = ReviewData.today();
     postForm.elements.date.value = date;
     postForm.elements.title.value = `${date} 每日复盘`;
     postForm.elements.category.value = "每日复盘";
@@ -131,6 +156,86 @@ function startCreate() {
   postForm.hidden = false;
   postForm.scrollIntoView({ behavior: "smooth", block: "start" });
 }
+
+async function openWeekly() {
+  if (uploading || saving) return;
+  const day = ReviewData.weekStart(
+    document.querySelector("#weekly-date").value,
+  );
+  if (!day) {
+    setMessage(dashboardMessage, "请选择有效日期");
+    return;
+  }
+  if (
+    !postForm.hidden &&
+    !confirm("打开所选周会丢弃当前未保存的编辑，继续吗？")
+  )
+    return;
+  saving = true;
+  try {
+    allPosts = await request("/api/posts");
+    posts = allPosts.filter((p) => p.category === reviewCategory);
+    const existing = posts.find((p) => ReviewData.weekStart(p.date) === day);
+    saving = false;
+    if (existing) {
+      startEdit(existing.id);
+      return;
+    }
+    editingId = null;
+    postForm.reset();
+    const draft = ReviewData.draft(allPosts, day);
+    for (const [name, value] of Object.entries(draft))
+      postForm.elements[name].value =
+        name === "content" ? value.join("\n") : value;
+    postForm.elements.image.required = false;
+    editorTitle.textContent = "整理周总结";
+    postForm.hidden = false;
+    postForm.scrollIntoView({ behavior: "smooth", block: "start" });
+    setMessage(
+      dashboardMessage,
+      "已提取本周复盘，请整理内容、补充下周计划后保存发布。",
+    );
+  } catch (error) {
+    setMessage(dashboardMessage, error.message);
+  } finally {
+    saving = false;
+  }
+}
+
+document
+  .querySelector("#weekly-date")
+  .addEventListener("change", showWeekRange);
+document
+  .querySelector("#weekly-generate")
+  .addEventListener("click", openWeekly);
+document
+  .querySelector("#weekly-refresh")
+  .addEventListener("click", async () => {
+    if (!weeklyMode || uploading || saving) return;
+    const day = ReviewData.weekStart(postForm.elements.date.value);
+    if (!day) {
+      setMessage(dashboardMessage, "请选择有效日期");
+      return;
+    }
+    if (!confirm("将替换当前正文，包括手写的下周计划。确定重新提取吗？"))
+      return;
+    saving = true;
+    try {
+      allPosts = await request("/api/posts");
+      postForm.elements.content.value = ReviewData.draft(
+        allPosts,
+        day,
+      ).content.join("\n");
+      setMessage(
+        dashboardMessage,
+        "已重新提取，尚未保存，请检查并补充下周计划。",
+      );
+    } catch (error) {
+      setMessage(dashboardMessage, error.message);
+    } finally {
+      saving = false;
+    }
+  });
 
 async function removePost(id) {
   if (uploading || saving) return;
@@ -172,7 +277,8 @@ postForm.addEventListener("submit", async (event) => {
   button.disabled = true;
   const data = Object.fromEntries(new FormData(postForm));
   if (reviewMode) {
-    data.category = "每日复盘";
+    data.category = reviewCategory;
+    if (weeklyMode) data.date = ReviewData.weekStart(data.date);
     data.date = data.date.replaceAll("-", ".");
   }
   data.content = data.content
@@ -181,6 +287,18 @@ postForm.addEventListener("submit", async (event) => {
     .filter(Boolean);
   saving = true;
   try {
+    if (weeklyMode) {
+      if (!ReviewData.dateKey(data.date)) throw new Error("请选择有效日期");
+      const latest = await request("/api/posts");
+      const duplicate = latest.find(
+        (p) =>
+          p.category === "每周总结" &&
+          ReviewData.weekStart(p.date) === ReviewData.weekStart(data.date) &&
+          p.id !== editingId,
+      );
+      if (duplicate)
+        throw new Error("这一周已有总结，请从列表编辑已有记录，避免重复发布。");
+    }
     const path = editingId
       ? `/api/posts/${encodeURIComponent(editingId)}`
       : "/api/posts";
@@ -228,7 +346,7 @@ document
   .querySelector("#post-video")
   .addEventListener("change", async (event) => {
     const file = event.target.files[0];
-    if (!file || uploading) return;
+    if (!file || uploading || saving) return;
     const output = document.querySelector("#video-message");
     if (!/\.mp4$/i.test(file.name)) {
       setMessage(output, "请选择 MP4 视频");
